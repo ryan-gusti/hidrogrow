@@ -11,7 +11,7 @@
       <button v-for="i in installations" :key="i.id" class="chip" :class="{ on: curInst === i.id }" @click="setInst(i.id)">{{ i.name }}</button>
     </div>
 
-    <div class="log-cols">
+    <div>
       <div>
         <section v-if="curInst !== null" class="reading">
           <div class="card read"><div class="k">pH terakhir</div><div class="v">{{ last ? comma(last.ph) : '—' }}</div><span v-if="last" class="badge" :class="phBadge"><span class="dot"></span>{{ phBadge === 'b-ok' ? 'Dalam rentang' : phBadge === 'b-warn' ? 'Perlu penyesuaian' : 'Di luar rentang' }}</span></div>
