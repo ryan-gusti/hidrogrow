@@ -1,5 +1,5 @@
 <template>
-  <div v-if="batch.timeline" class="phase-wrap" style="padding:0">
+  <div v-if="batch.timeline" class="phase-wrap" :style="padded ? null : { padding: 0 }">
     <div class="phase-labels">
       <span :class="{ now: isCurrent(0) }">Semai</span>
       <span>Pindah H+{{ firstEnd }}</span>
@@ -25,7 +25,7 @@
 import { computed } from 'vue';
 import { formatShort, todayStr, addDays, EVENT_META } from '../helpers';
 
-const props = defineProps({ batch: { type: Object, required: true } });
+const props = defineProps({ batch: { type: Object, required: true }, padded: { type: Boolean, default: true } });
 
 const phases = computed(() => props.batch.timeline.phases);
 const total = computed(() => phases.value.reduce((s, p) => s + p.days, 0));

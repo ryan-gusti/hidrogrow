@@ -10,7 +10,7 @@
         </div>
         <span class="badge" :class="statusChip">{{ statusLabel }}</span>
       </div>
-      <PhaseBar :batch="batch" style="margin-top:14px" />
+      <PhaseBar :batch="batch" :padded="false" style="margin-top:14px" />
 
       <div style="margin-top:14px">
         <div class="eyebrow" style="margin-bottom:8px">Timeline fase</div>
