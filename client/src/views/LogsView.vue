@@ -48,22 +48,6 @@
           </div>
         </section>
       </div>
-
-      <div>
-        <section class="card calc">
-          <span class="eyebrow">Kalkulator AB Mix</span>
-          <h2 style="font-size:20px;margin:4px 0 12px">Berapa ml pekatan yang kubutuhkan?</h2>
-          <div class="field"><label>Volume tandon (liter)</label><input v-model.number="calc.volume" type="number" inputmode="numeric" min="1" /></div>
-          <div class="field"><label>Target PPM</label><input v-model.number="calc.target" type="number" inputmode="numeric" min="100" max="2500" /></div>
-          <div class="calc-out">
-            <div v-if="calcResult" class="big">{{ numID(calcResult) }} ml A &nbsp;+&nbsp; {{ numID(calcResult) }} ml B</div>
-            <div v-else class="steps">Isi volume tandon & target PPM.</div>
-            <div v-if="calcResult" class="steps">1. Isi tandon ± 80% ({{ numID(Math.round(calc.volume * 0.8)) }} L) air bersih.<br>2. Larutkan <b>{{ numID(calcResult) }} ml pekatan A</b>, aduk rata.<br>3. Larutkan <b>{{ numID(calcResult) }} ml pekatan B</b> terpisah, aduk rata.<br>4. Ukur PPM — sesuaikan sedikit demi sedikit.</div>
-            <div class="warnline" :style="{ display: calc.target > 1800 ? 'block' : 'none' }">Target di atas 1.800 PPM berisiko untuk sayuran daun — naikkan bertahap per fase.</div>
-          </div>
-          <p style="font-size:12px;color:var(--meta);margin-top:12px;line-height:1.6">Aturan praktis: 1 ml pekatan A + 1 ml pekatan B per liter ≈ 140 PPM. Selalu larutkan A dan B <b>terpisah</b>.</p>
-        </section>
-      </div>
     </div>
 
     <QuickLogSheet v-if="logSheet" :preset-installation-id="curInst" @close="logSheet = false" @saved="onSaved" @toast="onToast" />
@@ -71,7 +55,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { api } from '../api';
 import { ICON, comma, numID, formatShort, openLightbox } from '../helpers';
 import TrendChart from '../components/TrendChart.vue';
@@ -83,10 +67,8 @@ const trend = ref([]);
 const curInst = ref(null);
 const kind = ref('ph');
 const logSheet = ref(false);
-const calc = reactive({ volume: 20, target: 1120 });
 
 const last = computed(() => logs.value[0]);
-const calcResult = computed(() => { if (!calc.volume || !calc.target) return null; return Math.round((calc.target / 140) * calc.volume); });
 
 const phBadge = computed(() => badgeOf(last.value?.ph, 5.5, 6.5));
 const ppmBadge = computed(() => badgeOf(last.value?.ppm, 840, 1400));

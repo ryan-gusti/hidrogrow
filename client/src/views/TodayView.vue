@@ -14,26 +14,6 @@
       <div class="stat"><div class="v">{{ kg(monthGrams) }} <small>kg</small></div><div class="k">Panen bulan ini</div></div>
     </div>
 
-    <section v-if="heroInst" class="hero">
-      <img :src="heroImg" alt="Instalasi hidroponik" loading="eager" />
-      <div class="panel">
-        <div class="t">
-          <h3>{{ heroInst.name }}</h3>
-          <span class="badge b-ok"><span class="dot"></span>Aktif</span>
-          <span class="meta">{{ systemLabel(heroInst.system_type) }} · Tandon {{ comma(heroInst.reservoir_volume) }} L</span>
-        </div>
-        <div class="hole-grid" :aria-label="`Status ${heroInst.capacity} lubang tanam`">
-          <span v-for="(h, i) in heroHoles" :key="i" class="hole" :class="h" :title="h"></span>
-        </div>
-        <div class="hole-legend">
-          <span v-if="heroCounts.vegetatif"><i style="background:var(--leaf)"></i>Vegetatif {{ heroCounts.vegetatif }}</span>
-          <span v-if="heroCounts.semai"><i style="background:var(--ev-semai)"></i>Semai {{ heroCounts.semai }}</span>
-          <span v-if="heroCounts.siap"><i style="background:var(--ev-panen)"></i>Siap panen {{ heroCounts.siap }}</span>
-          <span v-if="heroCounts.kosong"><i style="border:1.5px dashed var(--meta)"></i>Kosong {{ heroCounts.kosong }}</span>
-        </div>
-      </div>
-    </section>
-
     <div class="cols">
       <div>
         <section class="sec" style="margin-top:18px">
@@ -102,21 +82,6 @@ const openCount = computed(() => tasks.value.length);
 const lateCount = computed(() => tasks.value.filter((t) => t.due_date < todayStr()).length);
 const batchCount = computed(() => batches.value.length);
 const siapPanen = computed(() => batches.value.filter((b) => b.current_phase === 'Panen').length);
-
-const heroInst = computed(() => auth.installations[0] || null);
-const heroImg = '/assets/hero-nft.jpg';
-const heroCounts = computed(() => {
-  const c = { kosong: 0, semai: 0, vegetatif: 0, siap: 0 };
-  const inst = heroInst.value;
-  if (!inst || !inst.hole_status) return c;
-  c.semai = inst.hole_status.semai; c.vegetatif = inst.hole_status.vegetatif; c.siap = inst.hole_status.panen;
-  c.kosong = Math.max(0, (inst.capacity || 0) - c.semai - c.vegetatif - c.siap);
-  return c;
-});
-const heroHoles = computed(() => {
-  const c = heroCounts.value;
-  return [...Array(c.semai).fill('semai'), ...Array(c.vegetatif).fill('vegetatif'), ...Array(c.siap).fill('siap'), ...Array(c.kosong).fill('kosong')];
-});
 
 const usedHoles = (i) => i.hole_status ? (i.hole_status.semai + i.hole_status.vegetatif + i.hole_status.panen) : 0;
 function holesOf(i) {
