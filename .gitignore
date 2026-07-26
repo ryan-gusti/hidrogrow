@@ -1,0 +1,6 @@
+node_modules/
+dist/
+server/data/
+server/uploads/
+nohup.out
+.DS_Store
