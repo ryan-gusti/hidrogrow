@@ -1,0 +1,142 @@
+{
+  "schema": "open-design.design-manifest.v1",
+  "title": "HidroGrow — design system Anthropic (terimplementasi)",
+  "status": "implemented",
+  "implementedAt": "2026-07-26",
+  "entryFile": "client/src/design.css",
+  "sourceFiles": {
+    "designSource": "Frontend-Menarik-dari-PRD/*.html (read-only slicing reference)",
+    "tokenSource": "client/src/design.css",
+    "components": "client/src/components/*.vue",
+    "views": "client/src/views/*.vue",
+    "assets": [
+      "client/public/assets/hero-nft.jpg",
+      "client/public/assets/kebun-sap.jpg",
+      "client/public/assets/pakcoy.jpg",
+      "client/public/icon.svg",
+      "client/public/icon-maskable.svg"
+    ]
+  },
+  "screens": [
+    {
+      "slicingFile": "Frontend-Menarik-dari-PRD/index.html",
+      "role": "launcher-overview",
+      "route": "/",
+      "view": "client/src/views/TodayView.vue",
+      "implementationNote": "Halaman 'Hari Ini' — greeting, stat-grid, hero instalasi dengan hole-grid, daftar tugas (TaskCard), instalasi, horizontal scroll 'Segera Datang'.",
+      "status": "implemented"
+    },
+    {
+      "slicingFile": "Frontend-Menarik-dari-PRD/kalender.html",
+      "role": "screen",
+      "route": "/kalender",
+      "view": "client/src/views/CalendarView.vue",
+      "implementationNote": "Grid bulanan/mingguan, dot berwarna per jenis event, badge tugas, panel hari, tambah jadwal (AddEventSheet), geser tanggal (EventSheet). Data dari /api/calendar (recurring dimaterialisasi server-side).",
+      "status": "implemented"
+    },
+    {
+      "slicingFile": "Frontend-Menarik-dari-PRD/tanam.html",
+      "role": "screen",
+      "route": "/tanam",
+      "view": "client/src/views/GrowView.vue",
+      "implementationNote": "Batch aktif dengan thumbnail + PhaseBar, katalog tanaman dengan search + cat-card. Detail batch di route /tanam/:id (BatchDetailView.vue).",
+      "status": "implemented"
+    },
+    {
+      "slicingFile": "Frontend-Menarik-dari-PRD/log.html",
+      "role": "screen",
+      "route": "/log",
+      "view": "client/src/views/LogsView.vue",
+      "implementationNote": "Reading cards (pH/PPM/suhu), grafik tren SVG (TrendChart.vue, pH & PPM toggle), riwayat log, kalkulator AB Mix.",
+      "status": "implemented"
+    },
+    {
+      "slicingFile": "Frontend-Menarik-dari-PRD/laporan.html",
+      "role": "screen",
+      "route": "/laporan",
+      "view": "client/src/views/ReportsView.vue",
+      "implementationNote": "Banner, stat-grid, insight siklus (kotak gelap), grafik batang SVG (BarChart.vue), per-tanaman, riwayat batch, ringkasan biaya, ekspor CSV.",
+      "status": "implemented"
+    },
+    {
+      "slicingFile": null,
+      "role": "screen",
+      "route": "/login",
+      "view": "client/src/views/LoginView.vue",
+      "implementationNote": "Login username/password (akun default admin/admin123). Tidak ada di slicing — ditambah untuk autentikasi.",
+      "status": "implemented"
+    },
+    {
+      "slicingFile": null,
+      "role": "screen",
+      "route": "/onboarding",
+      "view": "client/src/views/OnboardingView.vue",
+      "implementationNote": "Buat instalasi pertama (InstallationForm). Tidak ada di slicing.",
+      "status": "implemented"
+    },
+    {
+      "slicingFile": null,
+      "role": "screen",
+      "route": "/pengaturan",
+      "view": "client/src/views/SettingsView.vue",
+      "implementationNote": "Profil, instalasi (CRUD), notifikasi, ganti password, hapus akun. Tidak ada di slicing.",
+      "status": "implemented"
+    }
+  ],
+  "appShell": {
+    "file": "client/src/App.vue",
+    "layout": "shell responsif: sidebar (desktop ≥1024px) berisi nav + daftar instalasi + kartu user; appbar (mobile) dengan badge tugas + avatar; bottom-nav 5 tab; FAB terakota + menu aksi cepat (Catat pH/PPM, Catat panen, Batch baru); container sheet & toast global.",
+    "navigation": ["Hari Ini", "Kalender", "Tanam", "Log", "Laporan"]
+  },
+  "components": {
+    "shared": ["Sheet.vue (bottom-sheet via Teleport)", "PhotoInput.vue (kompresi sisi klien)"],
+    "charts": ["TrendChart.vue (SVG, pH/PPM)", "BarChart.vue (SVG, panen/bulan)"],
+    "batch": ["PhaseBar.vue (prop padded — default true pakai padding .phase-wrap; set :padded=false di dalam card ber-padding)", "TaskCard.vue"],
+    "sheets": ["QuickLogSheet.vue", "BatchFormSheet.vue", "HarvestSheet.vue", "AddEventSheet.vue", "EventSheet.vue", "SnoozeSheet.vue", "NoteSheet.vue", "CostSheet.vue", "InstallationForm.vue", "PlantFormSheet.vue"]
+  },
+  "tokens": {
+    "source": "client/src/design.css",
+    "frozen": true,
+    "palette": {
+      "bg": "#f5f4ed",
+      "surface": "#faf9f5",
+      "surface-warm": "#e8e6dc",
+      "fg": "#141413",
+      "accent": "#c96442 (terakota)",
+      "leaf": "oklch(52% 0.105 150)",
+      "event": {
+        "semai": "oklch(52% 0.105 150)",
+        "pindah": "oklch(50% 0.075 240)",
+        "cek_nutrisi": "oklch(55% 0.11 78)",
+        "panen": "oklch(56% 0.135 52)"
+      }
+    },
+    "typography": {
+      "display": "\"Anthropic Serif\", Georgia, serif",
+      "body": "\"Anthropic Sans\", Arial, system-ui, sans-serif"
+    },
+    "note": "Token dibekukan verbatim dari slicing. Jangan substitusi warna/typografi framework default. Tidak ada Tailwind."
+  },
+  "interactions": {
+    "states": ["default", "hover", "focus", "active", "disabled", "loading", "empty", "error", "success"],
+    "behaviors": [
+      "bottom-sheet (Sheet.vue) via Teleport, bukan sheet-root global",
+      "toast global via window event 'hg:toast'",
+      "refresh data cross-view via window event 'hg:refresh'",
+      "FAB menu aksi cepat membuka sheet global",
+      "offline-first: form log di-queue localStorage, disinkronkan saat online"
+    ]
+  },
+  "responsiveBreakpoints": [
+    { "min": 1024, "layout": "sidebar 268px + konten; sheet jadi modal tengah 540px" },
+    { "range": "720–1023px", "layout": "grid 2–3 kolom untuk batch/katalog/stat" },
+    { "max": 719, "layout": "mobile: appbar + bottom-nav + FAB; sheet bottom-sheet" }
+  ],
+  "constraints": [
+    "Grafik harus SVG custom (TrendChart.vue & BarChart.vue) — JANGAN reintroduce Chart.js atau lib chart lain.",
+    "Tidak ada Tailwind — semua kelas di design.css.",
+    "Saat fix UI, cocokkan ke Frontend-Menarik-dari-PRD/*.html (slicing read-only).",
+    "PhaseBar.vue: prop padded default true; set :padded=false jika di dalam card yang sudah ber-padding.",
+    "Semua teks UI Bahasa Indonesia."
+  ]
+}
