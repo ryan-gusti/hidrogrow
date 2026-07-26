@@ -1,0 +1,37 @@
+# docker-compose.yml — deploy HidroGrow (full lokal, single container)
+#
+# Cara pakai:
+#   1. Salin .env.example ke .env, ubah JWT_SECRET & password default
+#   2. docker compose up -d --build
+#   3. Buka http://<server-ip>:3000  (login: admin / admin123)
+#
+# Data tersimpan di named volume (hg-data, hg-uploads) — tidak hilang saat container dihapus.
+
+services:
+  hidrogrow:
+    build: .
+    image: hidrogrow:latest
+    container_name: hidrogrow
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DEFAULT_USERNAME: ${DEFAULT_USERNAME:-admin}
+      DEFAULT_PASSWORD: ${DEFAULT_PASSWORD:-admin123}
+      JWT_SECRET: ${JWT_SECRET:-hidrogrow-local-secret}
+      UPLOAD_DIR: /app/server/uploads
+    volumes:
+      - hg-data:/app/server/data
+      - hg-uploads:/app/server/uploads
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  hg-data:
+  hg-uploads:

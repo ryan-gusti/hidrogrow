@@ -4,3 +4,4 @@ server/data/
 server/uploads/
 nohup.out
 .DS_Store
+.env

@@ -12,6 +12,13 @@ npm run build            # build client → client/dist
 npm start                # produksi: server :3000 menyajikan API + client/dist
 ```
 
+## Deploy (Docker)
+
+```bash
+cp .env.example .env        # ubah JWT_SECRET & password default
+docker compose up -d --build  # build & jalankan di :3000
+```
+
 - **Dev: buka http://localhost:5173** (Vite, hot-reload, proxy /api & /uploads ke :3000). Port :3000 saat dev hanya API — jangan dibuka sebagai app (menyajikan build lama).
 - **Prod:** `npm run build && npm start` → buka http://localhost:3000 (satu proses, Express serve SPA + API).
 - Test tunggal: `npm test -w server -- -t "nama test"`.
