@@ -1,46 +1,23 @@
 <template>
-  <Sheet title="🧺 Catat Panen" @close="$emit('close')">
-    <form class="space-y-3" @submit.prevent="save">
-      <div>
-        <label class="label">Batch</label>
-        <select v-model="form.batch_id" class="input" required>
-          <option v-for="b in batches" :key="b.id" :value="b.id">{{ b.name }} ({{ b.plant_name }})</option>
-        </select>
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="label">Tanggal panen</label>
-          <input v-model="form.date" type="date" class="input" required />
-        </div>
-        <div>
-          <label class="label">Jumlah</label>
-          <div class="flex gap-1">
-            <input v-model.number="form.quantity" type="number" step="1" min="0" class="input" placeholder="18" inputmode="numeric" />
-            <select v-model="form.unit" class="input !w-24">
-              <option value="pcs">pcs</option>
-              <option value="ikat">ikat</option>
-              <option value="pack">pack</option>
-              <option value="buah">buah</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      <div>
-        <label class="label">Berat (gram)</label>
-        <input v-model.number="form.weight_grams" type="number" step="1" min="0" class="input" placeholder="1450" inputmode="numeric" />
-      </div>
-      <div>
-        <label class="label">Catatan kualitas (opsional)</label>
-        <textarea v-model="form.notes" class="input" rows="2" placeholder="Daun segar, ukuran seragam…"></textarea>
-      </div>
-      <PhotoInput @uploaded="(url) => (form.photo = url)" />
-      <label class="flex items-center gap-2 text-sm text-gray-700">
-        <input v-model="closeBatch" type="checkbox" class="h-5 w-5 rounded border-gray-300 text-leaf-600" />
-        Tutup batch ini (siklus selesai)
-      </label>
-      <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
-      <button class="btn-primary w-full" :disabled="saving">{{ saving ? 'Menyimpan…' : 'Simpan Panen' }}</button>
-    </form>
+  <Sheet title="Catat Panen" sub="Panen bertahap didukung — batch tetap aktif sampai kamu menutupnya." @close="$emit('close')">
+    <div class="field"><label>Batch</label>
+      <select v-model="form.batch_id" class="input" required>
+        <option v-for="b in batches" :key="b.id" :value="b.id">{{ b.name }} — {{ b.plant_name }}</option>
+      </select>
+    </div>
+    <div class="frow">
+      <div class="field"><label>Jumlah (pcs/ikat)</label><input v-model.number="form.quantity" type="number" inputmode="numeric" min="1" placeholder="18" /></div>
+      <div class="field"><label>Berat (gram)</label><input v-model.number="form.weight_grams" type="number" inputmode="numeric" min="1" placeholder="1450" /></div>
+    </div>
+    <div class="field"><label>Catatan kualitas (opsional)</label><input v-model="form.notes" type="text" placeholder="Daun utuh, akar putih bersih" /></div>
+    <PhotoInput @uploaded="(url) => (form.photo = url)" @toast="(m) => emit('toast', m)" />
+    <label class="field" style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--fg-2);margin-top:14px">
+      <input v-model="closeBatch" type="checkbox" style="width:18px;height:18px;min-height:auto" /> Tutup batch ini (siklus selesai)
+    </label>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" style="flex:1" @click="$emit('close')">Batal</button>
+      <button class="btn btn-primary" style="flex:2" :disabled="saving" @click="save">{{ saving ? 'Menyimpan…' : 'Simpan panen' }}</button>
+    </div>
   </Sheet>
 </template>
 
@@ -49,38 +26,27 @@ import { onMounted, reactive, ref } from 'vue';
 import Sheet from './Sheet.vue';
 import PhotoInput from './PhotoInput.vue';
 import { api } from '../api';
-import { todayStr } from '../helpers';
+import { todayStr, numID } from '../helpers';
 
 const props = defineProps({ presetBatchId: { type: Number, default: null } });
-const emit = defineEmits(['close', 'saved']);
+const emit = defineEmits(['close', 'saved', 'toast']);
 
 const batches = ref([]);
 const saving = ref(false);
-const error = ref('');
 const closeBatch = ref(false);
-
-const form = reactive({
-  batch_id: props.presetBatchId,
-  date: todayStr(),
-  quantity: null,
-  unit: 'pcs',
-  weight_grams: null,
-  notes: '',
-  photo: null,
-});
+const form = reactive({ batch_id: props.presetBatchId, date: todayStr(), quantity: null, weight_grams: null, notes: '', photo: null });
 
 async function save() {
-  error.value = '';
+  if (!form.quantity || form.quantity < 1) { emit('toast', 'Isi jumlah panen.'); return; }
+  if (!form.weight_grams || form.weight_grams < 1) { emit('toast', 'Isi berat panen dalam gram.'); return; }
   saving.value = true;
   try {
     await api('POST', '/api/harvests', { ...form });
     if (closeBatch.value) await api('POST', `/api/batches/${form.batch_id}/close`);
+    emit('toast', `Panen ${numID(form.weight_grams)} g tercatat — masuk ke Laporan.`);
     emit('saved');
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    saving.value = false;
-  }
+  } catch (err) { emit('toast', err.message); }
+  finally { saving.value = false; }
 }
 
 onMounted(async () => {

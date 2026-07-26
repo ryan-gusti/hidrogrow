@@ -1,83 +1,70 @@
 <template>
-  <div class="space-y-4">
-    <!-- Profil -->
-    <div class="card space-y-3">
-      <h3 class="font-bold">👤 Profil</h3>
-      <div>
-        <label class="label">Nama</label>
-        <div class="flex gap-2">
-          <input v-model="name" type="text" class="input flex-1" />
-          <button class="btn-secondary" :disabled="!name.trim() || name === auth.user?.name" @click="saveName">Simpan</button>
+  <div>
+    <div class="page-head"><h1>Pengaturan</h1></div>
+
+    <div class="card" style="padding:16px;margin-bottom:16px">
+      <div class="sec-head" style="margin:0 0 12px"><h2 style="font-size:18px">👤 Profil</h2></div>
+      <div class="field"><label>Nama</label>
+        <div style="display:flex;gap:8px">
+          <input v-model="name" type="text" style="flex:1" />
+          <button class="btn btn-secondary" :disabled="!name.trim() || name === auth.user?.name" @click="saveName">Simpan</button>
         </div>
       </div>
-      <p class="text-sm text-gray-500">@{{ auth.user?.username }}</p>
+      <p style="font-size:13px;color:var(--muted)">@{{ auth.user?.username }}</p>
     </div>
 
-    <!-- Instalasi -->
-    <div class="card space-y-3">
-      <div class="flex items-center justify-between">
-        <h3 class="font-bold">🏡 Instalasi Saya</h3>
-        <button class="text-sm font-medium text-leaf-600" @click="editing = {}; instForm = true">+ Tambah</button>
-      </div>
-      <div v-for="i in auth.installations" :key="i.id" class="rounded-xl border border-gray-100 p-3">
-        <div class="flex items-center justify-between">
+    <div class="card" style="padding:16px;margin-bottom:16px">
+      <div class="sec-head" style="margin:0 0 12px"><h2 style="font-size:18px">🏡 Instalasi Saya</h2><span class="sp"></span><button class="btn btn-ghost btn-sm" @click="editing = {}; instForm = true">+ Tambah</button></div>
+      <div v-for="i in auth.installations" :key="i.id" style="border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
           <div>
-            <p class="font-medium">{{ i.name }}</p>
-            <p class="text-xs text-gray-500">{{ systemLabel(i.system_type) }} · {{ i.capacity }} lubang · {{ i.reservoir_volume }} L</p>
+            <p style="font-weight:500">{{ i.name }}</p>
+            <p style="font-size:12px;color:var(--muted)">{{ systemLabel(i.system_type) }} · {{ i.capacity }} lubang · {{ comma(i.reservoir_volume) }} L</p>
           </div>
-          <div class="flex gap-1">
-            <button class="btn-ghost !min-h-0 p-2" @click="editing = i; instForm = true">✏️</button>
-            <button class="btn-ghost !min-h-0 p-2" @click="removeInst(i)">🗑</button>
+          <div style="display:flex;gap:4px">
+            <button class="icon-btn" @click="editing = i; instForm = true">✏️</button>
+            <button class="icon-btn" @click="removeInst(i)">🗑</button>
           </div>
         </div>
-        <!-- Visualisasi status lubang -->
-        <div v-if="i.capacity > 0" class="mt-2">
-          <div class="flex h-3 overflow-hidden rounded-full bg-gray-100" :title="`${usedHoles(i)}/${i.capacity} lubang terpakai`">
-            <div class="bg-green-400" :style="{ width: pct(i.hole_status.semai, i.capacity) }" />
-            <div class="bg-blue-400" :style="{ width: pct(i.hole_status.vegetatif, i.capacity) }" />
-            <div class="bg-orange-400" :style="{ width: pct(i.hole_status.panen, i.capacity) }" />
+        <div v-if="i.capacity > 0" style="margin-top:8px">
+          <div style="display:flex;height:6px;border-radius:99px;background:var(--surface-warm);overflow:hidden">
+            <div style="background:var(--ev-semai)" :style="{ width: pct(i.hole_status?.semai, i.capacity) }"></div>
+            <div style="background:var(--leaf)" :style="{ width: pct(i.hole_status?.vegetatif, i.capacity) }"></div>
+            <div style="background:var(--ev-panen)" :style="{ width: pct(i.hole_status?.panen, i.capacity) }"></div>
           </div>
-          <p class="mt-1 text-[10px] text-gray-400">
-            🟢 semai {{ i.hole_status.semai }} · 🔵 vegetatif {{ i.hole_status.vegetatif }} · 🟠 siap panen {{ i.hole_status.panen }} · kosong {{ Math.max(0, i.capacity - usedHoles(i)) }}
-          </p>
+          <p style="font-size:11px;color:var(--meta);margin-top:4px">🟢 semai {{ i.hole_status?.semai || 0 }} · 🔵 vegetatif {{ i.hole_status?.vegetatif || 0 }} · 🟠 siap panen {{ i.hole_status?.panen || 0 }}</p>
         </div>
       </div>
     </div>
 
-    <!-- Notifikasi -->
-    <div class="card flex items-center justify-between">
+    <div class="card" style="padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between">
       <div>
-        <h3 class="font-bold">🔔 Notifikasi</h3>
-        <p class="text-xs text-gray-500">Pengingat harian saat aplikasi dibuka (notifikasi lokal).</p>
+        <h2 style="font-size:18px">🔔 Notifikasi</h2>
+        <p style="font-size:12px;color:var(--muted)">Pengingat harian saat aplikasi dibuka.</p>
       </div>
-      <button class="btn-secondary !min-h-0 !py-1.5 text-sm" @click="enableNotif">{{ notifLabel }}</button>
+      <button class="btn btn-secondary btn-sm" @click="enableNotif">{{ notifLabel }}</button>
     </div>
 
-    <!-- Ganti password -->
-    <div class="card space-y-3">
-      <h3 class="font-bold">🔑 Ganti Password</h3>
-      <input v-model="pw.current" type="password" class="input" placeholder="Password saat ini" autocomplete="current-password" />
-      <input v-model="pw.next" type="password" class="input" placeholder="Password baru (min. 6 karakter)" autocomplete="new-password" />
-      <p v-if="pwMsg" class="text-sm" :class="pwOk ? 'text-leaf-600' : 'text-red-600'">{{ pwMsg }}</p>
-      <button class="btn-secondary w-full" :disabled="!pw.current || pw.next.length < 6" @click="changePassword">Simpan Password Baru</button>
+    <div class="card" style="padding:16px;margin-bottom:16px">
+      <div class="sec-head" style="margin:0 0 12px"><h2 style="font-size:18px">🔑 Ganti Password</h2></div>
+      <div class="field"><label>Password saat ini</label><input v-model="pw.current" type="password" autocomplete="current-password" /></div>
+      <div class="field"><label>Password baru (min. 6 karakter)</label><input v-model="pw.next" type="password" autocomplete="new-password" /></div>
+      <button class="btn btn-secondary" style="width:100%" :disabled="!pw.current || pw.next.length < 6" @click="changePassword">Simpan Password Baru</button>
     </div>
 
-    <!-- Zona berbahaya -->
-    <div class="card space-y-3 !border-red-100">
-      <h3 class="font-bold text-red-600">⚠️ Zona Berbahaya</h3>
-      <button class="btn-secondary w-full" @click="logout">Keluar</button>
-      <button class="btn-danger w-full" @click="deleting = true">Hapus Akun & Seluruh Data</button>
+    <div class="card" style="padding:16px;border-color:color-mix(in oklab, var(--danger) 25%, var(--border))">
+      <div class="sec-head" style="margin:0 0 12px"><h2 style="font-size:18px;color:var(--danger)">⚠️ Zona Berbahaya</h2></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-secondary" @click="logout">Keluar</button>
+        <button class="btn btn-danger" @click="deleting = true">Hapus Akun & Seluruh Data</button>
+      </div>
     </div>
 
-    <InstallationForm v-if="instForm" :initial="editing?.id ? editing : null" class="!shadow-md" @saved="onInstSaved" />
-
+    <InstallationForm v-if="instForm" :initial="editing?.id ? editing : null" @close="instForm = false" @saved="onInstSaved" @toast="onToast" />
     <Sheet v-if="deleting" title="Hapus Akun?" @close="deleting = false">
-      <div class="space-y-3">
-        <p class="text-sm text-gray-600">Semua data kebun, batch, log, dan panen akan dihapus permanen. Akun default akan dibuat ulang saat server restart. Tindakan ini tidak bisa dibatalkan.</p>
-        <input v-model="deletePassword" type="password" class="input" placeholder="Konfirmasi password" />
-        <p v-if="deleteError" class="text-sm text-red-600">{{ deleteError }}</p>
-        <button class="btn-danger w-full" @click="deleteAccount">Ya, Hapus Semuanya</button>
-      </div>
+      <p class="sub">Semua data kebun akan dihapus permanen. Akun default dibuat ulang saat server restart.</p>
+      <div class="field"><label>Konfirmasi password</label><input v-model="deletePassword" type="password" /></div>
+      <button class="btn btn-danger" style="width:100%" @click="deleteAccount">Ya, Hapus Semuanya</button>
     </Sheet>
   </div>
 </template>
@@ -87,76 +74,42 @@ import { onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { api } from '../api';
 import { useAuthStore } from '../stores/auth';
-import { systemLabel, ensureNotificationPermission } from '../helpers';
+import { systemLabel, comma, ensureNotificationPermission } from '../helpers';
 import InstallationForm from '../components/InstallationForm.vue';
 import Sheet from '../components/Sheet.vue';
 
 const router = useRouter();
 const auth = useAuthStore();
-
 const name = ref('');
 const pw = reactive({ current: '', next: '' });
-const pwMsg = ref('');
-const pwOk = ref(false);
 const instForm = ref(false);
 const editing = ref(null);
 const deleting = ref(false);
 const deletePassword = ref('');
-const deleteError = ref('');
 const notifLabel = ref('Aktifkan');
 
-const usedHoles = (i) => i.hole_status.semai + i.hole_status.vegetatif + i.hole_status.panen;
-const pct = (n, cap) => `${Math.min(100, (n / cap) * 100)}%`;
+const pct = (n, cap) => `${Math.min(100, ((n || 0) / (cap || 1)) * 100)}%`;
 
 async function saveName() {
-  const { user } = await api('PUT', '/api/auth/profile', { name: name.value });
-  auth.user = user;
+  try { const { user } = await api('PUT', '/api/auth/profile', { name: name.value }); auth.user = user; window.dispatchEvent(new CustomEvent('hg:toast', { detail: 'Profil tersimpan.' })); }
+  catch (e) { window.dispatchEvent(new CustomEvent('hg:toast', { detail: e.message })); }
 }
-
 async function changePassword() {
-  pwMsg.value = '';
-  try {
-    await api('PUT', '/api/auth/password', { current_password: pw.current, new_password: pw.next });
-    pwOk.value = true;
-    pwMsg.value = 'Password berhasil diubah.';
-    pw.current = pw.next = '';
-  } catch (err) {
-    pwOk.value = false;
-    pwMsg.value = err.message;
-  }
+  try { await api('PUT', '/api/auth/password', { current_password: pw.current, new_password: pw.next }); pw.current = pw.next = ''; window.dispatchEvent(new CustomEvent('hg:toast', { detail: 'Password berhasil diubah.' })); }
+  catch (e) { window.dispatchEvent(new CustomEvent('hg:toast', { detail: e.message })); }
 }
-
 async function removeInst(i) {
   if (!confirm(`Hapus instalasi "${i.name}" beserta seluruh batch & lognya?`)) return;
-  await api('DELETE', `/api/installations/${i.id}`);
-  await auth.fetchInstallations(true);
+  try { await api('DELETE', `/api/installations/${i.id}`); await auth.fetchInstallations(true); window.dispatchEvent(new CustomEvent('hg:toast', { detail: 'Instalasi dihapus.' })); }
+  catch (e) { window.dispatchEvent(new CustomEvent('hg:toast', { detail: e.message })); }
 }
-
-async function onInstSaved() {
-  instForm.value = false;
-  editing.value = null;
-  await auth.fetchInstallations(true);
-}
-
-async function enableNotif() {
-  const ok = await ensureNotificationPermission();
-  notifLabel.value = ok ? 'Aktif ✓' : 'Ditolak';
-}
-
-function logout() {
-  auth.logout();
-  router.push('/login');
-}
-
+async function onInstSaved() { instForm.value = false; editing.value = null; await auth.fetchInstallations(true); }
+function onToast(m) { window.dispatchEvent(new CustomEvent('hg:toast', { detail: m })); }
+async function enableNotif() { const ok = await ensureNotificationPermission(); notifLabel.value = ok ? 'Aktif ✓' : 'Ditolak'; }
+function logout() { auth.logout(); router.push('/login'); }
 async function deleteAccount() {
-  deleteError.value = '';
-  try {
-    await api('DELETE', '/api/auth/account', { password: deletePassword.value });
-    auth.logout();
-    router.push('/login');
-  } catch (err) {
-    deleteError.value = err.message;
-  }
+  try { await api('DELETE', '/api/auth/account', { password: deletePassword.value }); auth.logout(); router.push('/login'); }
+  catch (e) { window.dispatchEvent(new CustomEvent('hg:toast', { detail: e.message })); }
 }
 
 onMounted(async () => {

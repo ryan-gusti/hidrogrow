@@ -1,120 +1,99 @@
 <template>
-  <div class="space-y-4">
-    <div class="flex rounded-xl bg-gray-100 p-1">
-      <button class="flex-1 rounded-lg py-2 text-sm font-medium" :class="tab === 'batch' ? 'bg-white shadow text-leaf-700' : 'text-gray-500'" @click="tab = 'batch'">Batch Aktif</button>
-      <button class="flex-1 rounded-lg py-2 text-sm font-medium" :class="tab === 'catalog' ? 'bg-white shadow text-leaf-700' : 'text-gray-500'" @click="tab = 'catalog'">Katalog Tanaman</button>
-      <button class="flex-1 rounded-lg py-2 text-sm font-medium" :class="tab === 'history' ? 'bg-white shadow text-leaf-700' : 'text-gray-500'" @click="tab = 'history'">Riwayat</button>
+  <div>
+    <div class="page-head">
+      <h1>Tanam</h1>
+      <span class="sp"></span>
+      <button class="btn btn-primary" @click="batchSheet = true"><span v-html="ICON.plus"></span>Batch Baru</button>
     </div>
 
-    <!-- TAB: Batch aktif -->
-    <div v-if="tab === 'batch'" class="space-y-3">
-      <button class="btn-primary w-full" @click="batchSheet = true">+ Batch Baru</button>
-      <div v-if="active.length === 0" class="card py-10 text-center">
-        <span class="text-4xl">🌱</span>
-        <p class="mt-2 font-medium">Belum ada batch aktif</p>
-        <p class="text-sm text-gray-500">Mulai semai batch pertamamu!</p>
-      </div>
-      <router-link v-for="b in active" :key="b.id" :to="`/tanam/${b.id}`" class="card block space-y-2">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="font-bold">{{ b.name }}</p>
-            <p class="text-xs text-gray-500">{{ b.quantity }} tanaman · Hari ke-{{ b.day_number }}</p>
+    <section>
+      <div class="sec-head"><span class="eyebrow">Batch aktif</span><span class="sp"></span><span class="badge b-muted">{{ active.length }} batch</span></div>
+      <div v-if="active.length === 0" class="card" style="padding:28px;text-align:center;color:var(--muted)">Belum ada batch aktif. Mulai semai batch pertamamu!</div>
+      <div v-else class="batch-grid">
+        <router-link v-for="b in active" :key="b.id" :to="`/tanam/${b.id}`" class="card batch-card" style="text-decoration:none">
+          <div class="batch-top">
+            <img v-if="photo(b)" class="batch-thumb" :src="photo(b)" :alt="b.plant_name" />
+            <span v-else class="batch-thumb" style="display:grid;place-items:center;background:var(--leaf-soft);color:var(--leaf-deep)" v-html="ICON.navGrow"></span>
+            <div class="batch-info">
+              <h3>{{ b.name }}</h3>
+              <div class="m">{{ instName(b) }} · {{ b.quantity }} lubang · Semai {{ formatShort(b.sow_date) }}</div>
+              <div class="batch-meta-row">
+                <span class="badge" :class="phaseCls(b)"><span class="dot"></span>{{ b.current_phase }}</span>
+                <span style="font-size:12.5px;color:var(--muted)">Hari ke-{{ b.day_number }} dari ±{{ totalDays(b) }}</span>
+              </div>
+            </div>
           </div>
-          <span class="chip bg-leaf-100 text-leaf-700">{{ b.current_phase }}</span>
-        </div>
-        <PhaseBar :batch="b" />
-      </router-link>
-    </div>
+          <PhaseBar :batch="b" />
+        </router-link>
+      </div>
+    </section>
 
-    <!-- TAB: Katalog -->
-    <div v-else-if="tab === 'catalog'" class="space-y-3">
-      <button class="btn-secondary w-full" @click="plantSheet = true">+ Tanaman Kustom</button>
-      <div v-for="p in plants" :key="p.id" class="card space-y-2">
-        <div class="flex items-center justify-between">
-          <p class="font-bold">{{ p.name }}</p>
-          <div class="flex items-center gap-2">
-            <span class="chip bg-gray-100 text-gray-600">±{{ totalDays(p) }} hari</span>
-            <button v-if="p.is_custom" class="btn-ghost !min-h-0 p-1 text-sm" @click="editPlant(p)">✏️</button>
+    <section class="sec">
+      <div class="sec-head">
+        <h2>Katalog Tanaman</h2>
+        <span class="badge b-muted">{{ plants.length }} template</span>
+        <span class="sp"></span>
+        <button class="btn btn-secondary btn-sm" @click="plantSheet = true">+ Tanaman kustom</button>
+      </div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+        <input v-model="search" type="search" placeholder="Cari tanaman — misal: selada, kangkung…" aria-label="Cari tanaman" />
+      </div>
+      <div class="cat-grid">
+        <div v-for="p in filteredPlants" :key="p.id" class="card cat-card">
+          <div class="nm"><i v-html="ICON.navGrow"></i><div><h3>{{ p.name }}<span v-if="p.is_custom" class="badge b-muted" style="margin-left:6px">Kustom</span></h3></div></div>
+          <div class="spec">
+            <span class="badge b-muted">Panen ± {{ totalDays(p) }} hr</span>
+            <span class="badge b-muted">pH {{ comma(p.phases[0].ph_min) }}–{{ comma(p.phases[0].ph_max) }}</span>
+            <span class="badge b-muted">PPM {{ p.phases.at(-1).ppm_min }}–{{ p.phases.at(-1).ppm_max }}</span>
           </div>
+          <div class="tips">{{ p.tips || 'Template siap pakai.' }}</div>
+          <div class="row"><button class="mini-btn primary" @click="semai(p)">Semai tanaman ini</button></div>
         </div>
-        <div class="flex gap-1 text-xs">
-          <span v-for="(ph, i) in p.phases" :key="i" class="chip bg-leaf-50 text-leaf-700">{{ ph.name }} {{ ph.days }}h</span>
-        </div>
-        <p class="text-xs text-gray-500">pH {{ p.phases[0].ph_min }}–{{ p.phases[0].ph_max }} · PPM {{ p.phases.at(-1).ppm_min }}–{{ p.phases.at(-1).ppm_max }}</p>
-        <p v-if="p.tips" class="text-xs text-gray-400">💡 {{ p.tips }}</p>
       </div>
-    </div>
+    </section>
 
-    <!-- TAB: Riwayat -->
-    <div v-else class="space-y-2">
-      <div v-if="history.length === 0" class="card py-10 text-center text-sm text-gray-400">
-        Belum ada batch yang selesai atau gagal.
-      </div>
-      <router-link v-for="b in history" :key="b.id" :to="`/tanam/${b.id}`" class="card flex items-center justify-between !p-3">
-        <div>
-          <p class="font-medium">{{ b.name }}</p>
-          <p class="text-xs text-gray-500">Semai {{ formatShort(b.sow_date) }}<template v-if="b.status === 'failed'"> · {{ b.fail_reason }}</template></p>
-        </div>
-        <span class="chip" :class="b.status === 'done' ? 'bg-leaf-100 text-leaf-700' : 'bg-red-100 text-red-600'">
-          {{ b.status === 'done' ? 'Selesai' : 'Gagal' }}
-        </span>
-      </router-link>
-    </div>
-
-    <BatchFormSheet v-if="batchSheet" @close="batchSheet = false" @saved="onSaved" />
-    <PlantFormSheet v-if="plantSheet" :initial="editingPlant" @close="closePlantSheet" @saved="onSaved" />
+    <BatchFormSheet v-if="batchSheet" @close="batchSheet = false" @saved="onSaved" @toast="onToast" />
+    <PlantFormSheet v-if="plantSheet" @close="plantSheet = false" @saved="onSaved" @toast="onToast" />
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { api } from '../api';
-import { formatShort } from '../helpers';
+import { useAuthStore } from '../stores/auth';
+import { ICON, EVENT_META, formatShort, comma } from '../helpers';
 import PhaseBar from '../components/PhaseBar.vue';
 import BatchFormSheet from '../components/BatchFormSheet.vue';
 import PlantFormSheet from '../components/PlantFormSheet.vue';
 
-const tab = ref('batch');
+const auth = useAuthStore();
 const batches = ref([]);
 const plants = ref([]);
+const search = ref('');
 const batchSheet = ref(false);
 const plantSheet = ref(false);
-const editingPlant = ref(null);
 
 const active = computed(() => batches.value.filter((b) => b.status === 'active'));
-const history = computed(() => batches.value.filter((b) => b.status !== 'active'));
+const filteredPlants = computed(() => plants.value.filter((p) => !search.value || p.name.toLowerCase().includes(search.value.toLowerCase())));
 
-function totalDays(p) { return p.phases.reduce((s, x) => s + x.days, 0); }
-
-function editPlant(p) {
-  editingPlant.value = p;
-  plantSheet.value = true;
-}
-
-function closePlantSheet() {
-  plantSheet.value = false;
-  editingPlant.value = null;
-}
+const totalDays = (b) => (b.timeline ? b.timeline.phases.reduce((s, p) => s + p.days, 0) : (b.phases ? b.phases.reduce((s, p) => s + p.days, 0) : 0));
+const phaseCls = (b) => { const p = b.current_phase; return p === 'Semai' ? 'b-semai' : p === 'Panen' ? 'b-panen' : 'b-ok'; };
+const instName = (b) => auth.installations.find((i) => i.id === b.installation_id)?.name || '—';
+const photo = (b) => {
+  const n = (b.plant_name || '').toLowerCase();
+  if (n.includes('selada') || n.includes('romaine')) return '/assets/hero-nft.jpg';
+  if (n.includes('kangkung') || n.includes('sawi') || n.includes('bayam')) return '/assets/kebun-sap.jpg';
+  if (n.includes('pakcoy') || n.includes('caisim')) return '/assets/pakcoy.jpg';
+  return null;
+};
+function semai(p) { batchSheet.value = true; }
+function onSaved() { batchSheet.value = false; plantSheet.value = false; load(); window.dispatchEvent(new CustomEvent('hg:refresh')); }
+function onToast(m) { window.dispatchEvent(new CustomEvent('hg:toast', { detail: m })); }
 
 async function load() {
-  try {
-    [batches.value, plants.value] = await Promise.all([
-      api('GET', '/api/batches'),
-      api('GET', '/api/plants'),
-    ]);
-  } catch { /* offline */ }
+  try { [batches.value, plants.value] = await Promise.all([api('GET', '/api/batches'), api('GET', '/api/plants')]); } catch { /* offline */ }
 }
-
-function onSaved() {
-  batchSheet.value = false;
-  closePlantSheet();
-  load();
-  window.dispatchEvent(new CustomEvent('hg:refresh'));
-}
-
-onMounted(() => {
-  load();
-  window.addEventListener('hg:refresh', load);
-});
+onMounted(() => { load(); window.addEventListener('hg:refresh', load); });
 onUnmounted(() => window.removeEventListener('hg:refresh', load));
 </script>

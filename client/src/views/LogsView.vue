@@ -1,169 +1,107 @@
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-between gap-2">
-      <select v-model="filterInstallation" class="input !w-auto flex-1" @change="load">
-        <option :value="null">Semua instalasi</option>
-        <option v-for="i in installations" :key="i.id" :value="i.id">{{ i.name }}</option>
-      </select>
-      <button class="btn-primary !min-h-0 !py-2 text-sm" @click="logSheet = true">+ Log</button>
+  <div>
+    <div class="page-head">
+      <h1>Log Nutrisi</h1>
+      <span class="sp"></span>
+      <button class="btn btn-primary" @click="logSheet = true"><span v-html="ICON.plus"></span>Catat Log</button>
     </div>
 
-    <div class="flex rounded-xl bg-gray-100 p-1">
-      <button class="flex-1 rounded-lg py-2 text-sm font-medium" :class="tab === 'list' ? 'bg-white shadow text-leaf-700' : 'text-gray-500'" @click="tab = 'list'">Riwayat</button>
-      <button class="flex-1 rounded-lg py-2 text-sm font-medium" :class="tab === 'trend' ? 'bg-white shadow text-leaf-700' : 'text-gray-500'" @click="tab = 'trend'">Grafik Tren</button>
-      <button class="flex-1 rounded-lg py-2 text-sm font-medium" :class="tab === 'calc' ? 'bg-white shadow text-leaf-700' : 'text-gray-500'" @click="tab = 'calc'">Kalkulator AB Mix</button>
+    <div class="chips">
+      <button v-for="i in installations" :key="i.id" class="chip" :class="{ on: curInst === i.id }" @click="curInst = i.id">{{ i.name }}</button>
     </div>
 
-    <!-- Riwayat -->
-    <div v-if="tab === 'list'" class="space-y-2">
-      <p v-if="!logs.length" class="card py-10 text-center text-sm text-gray-400">Belum ada log. Catat pengecekan pertamamu!</p>
-      <div v-for="l in logs" :key="l.id" class="card !p-3">
-        <div class="flex items-center justify-between">
-          <p class="text-sm font-medium">{{ formatId(l.date) }}</p>
-          <div class="flex items-center gap-2">
-            <span class="chip" :class="typeChip(l.type)">{{ typeLabel(l.type) }}</span>
-            <button class="text-gray-300 hover:text-red-500" @click="remove(l)">🗑</button>
+    <div class="log-cols">
+      <div>
+        <section class="reading">
+          <div class="card read"><div class="k">pH terakhir</div><div class="v">{{ last ? comma(last.ph) : '—' }}</div><span v-if="last" class="badge" :class="phBadge"><span class="dot"></span>{{ phBadge === 'b-ok' ? 'Dalam rentang' : phBadge === 'b-warn' ? 'Perlu penyesuaian' : 'Di luar rentang' }}</span></div>
+          <div class="card read"><div class="k">PPM terakhir</div><div class="v">{{ last ? numID(last.ppm) : '—' }}</div><span v-if="last" class="badge" :class="ppmBadge"><span class="dot"></span>{{ ppmBadge === 'b-ok' ? 'Dalam rentang' : 'Perlu penyesuaian' }}</span></div>
+          <div class="card read"><div class="k">Suhu air</div><div class="v">{{ last && last.water_temp != null ? comma(last.water_temp) + '°' : '—' }}</div><span v-if="last" class="badge b-muted">{{ formatShort(last.date) }}</span></div>
+        </section>
+
+        <section class="sec card chart-card">
+          <div class="chart-head">
+            <h2 style="font-size:19px">Tren 14 hari</h2><span class="sp"></span>
+            <div class="seg">
+              <button :class="{ on: kind === 'ph' }" @click="kind = 'ph'">pH</button>
+              <button :class="{ on: kind === 'ppm' }" @click="kind = 'ppm'">PPM</button>
+            </div>
           </div>
-        </div>
-        <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <span v-if="l.ph != null" :class="flagClass(l.ph_flag)">pH {{ l.ph }} {{ flagIcon(l.ph_flag) }}</span>
-          <span v-if="l.ppm != null" :class="flagClass(l.ppm_flag)">PPM {{ l.ppm }} {{ flagIcon(l.ppm_flag) }}</span>
-          <span v-if="l.water_temp != null" class="text-gray-600">🌡 {{ l.water_temp }}°C</span>
-          <span v-if="l.volume_added != null" class="text-gray-600">+{{ l.volume_added }} L</span>
-        </div>
-        <p v-if="l.range" class="mt-1 text-xs text-gray-400">
-          Target fase {{ l.range.phase }}: pH {{ l.range.ph_min }}–{{ l.range.ph_max }} · PPM {{ l.range.ppm_min }}–{{ l.range.ppm_max }}
-        </p>
-        <p v-if="l.note" class="mt-1 text-xs text-gray-500">{{ l.note }}</p>
+          <TrendChart v-if="trend.length" :logs="trend" :kind="kind" />
+          <div v-else class="empty-note" style="padding:20px;text-align:center">Belum ada data untuk instalasi ini.</div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-head"><h2>Riwayat</h2><span class="badge b-muted">{{ logs.length }} entri</span><span class="sp"></span></div>
+          <div class="card" style="padding:0">
+            <div v-for="l in logs" :key="l.id" class="log-row">
+              <span class="st" :style="{ background: flagColor(l) }"></span>
+              <span class="dt">{{ formatShort(l.date) }}</span>
+              <div class="bd"><div class="t">{{ typeLabel(l.type) }}</div>
+                <div class="m">pH {{ comma(l.ph) }}<template v-if="l.ppm != null"> · {{ numID(l.ppm) }} PPM</template><template v-if="l.water_temp != null"> · {{ comma(l.water_temp) }}°C</template><template v-if="l.volume_added != null"> · +{{ comma(l.volume_added) }} L</template></div>
+              </div>
+              <span class="badge b-muted">{{ typeLabel(l.type).split(' ')[0] }}</span>
+            </div>
+            <div v-if="!logs.length" class="empty-note" style="padding:20px;text-align:center">Belum ada log.</div>
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section class="card calc">
+          <span class="eyebrow">Kalkulator AB Mix</span>
+          <h2 style="font-size:20px;margin:4px 0 12px">Berapa ml pekatan yang kubutuhkan?</h2>
+          <div class="field"><label>Volume tandon (liter)</label><input v-model.number="calc.volume" type="number" inputmode="numeric" min="1" /></div>
+          <div class="field"><label>Target PPM</label><input v-model.number="calc.target" type="number" inputmode="numeric" min="100" max="2500" /></div>
+          <div class="calc-out">
+            <div v-if="calcResult" class="big">{{ numID(calcResult) }} ml A &nbsp;+&nbsp; {{ numID(calcResult) }} ml B</div>
+            <div v-else class="steps">Isi volume tandon & target PPM.</div>
+            <div v-if="calcResult" class="steps">1. Isi tandon ± 80% ({{ numID(Math.round(calc.volume * 0.8)) }} L) air bersih.<br>2. Larutkan <b>{{ numID(calcResult) }} ml pekatan A</b>, aduk rata.<br>3. Larutkan <b>{{ numID(calcResult) }} ml pekatan B</b> terpisah, aduk rata.<br>4. Ukur PPM — sesuaikan sedikit demi sedikit.</div>
+            <div class="warnline" :style="{ display: calc.target > 1800 ? 'block' : 'none' }">Target di atas 1.800 PPM berisiko untuk sayuran daun — naikkan bertahap per fase.</div>
+          </div>
+          <p style="font-size:12px;color:var(--meta);margin-top:12px;line-height:1.6">Aturan praktis: 1 ml pekatan A + 1 ml pekatan B per liter ≈ 140 PPM. Selalu larutkan A dan B <b>terpisah</b>.</p>
+        </section>
       </div>
     </div>
 
-    <!-- Grafik tren -->
-    <div v-else-if="tab === 'trend'" class="space-y-3">
-      <div v-if="!filterInstallation" class="card py-8 text-center text-sm text-gray-400">
-        Pilih instalasi di atas untuk melihat grafik tren pH & PPM.
-      </div>
-      <template v-else>
-        <div class="card"><p class="mb-2 text-sm font-bold">Tren pH</p><canvas ref="phCanvas" /></div>
-        <div class="card"><p class="mb-2 text-sm font-bold">Tren PPM</p><canvas ref="ppmCanvas" /></div>
-        <p v-if="!trendData.length" class="text-center text-sm text-gray-400">Belum ada data untuk instalasi ini.</p>
-      </template>
-    </div>
-
-    <!-- Kalkulator AB Mix -->
-    <div v-else class="card space-y-3">
-      <h3 class="font-bold">🧪 Kalkulator Nutrisi AB Mix</h3>
-      <p class="text-xs text-gray-500">Asumsi umum: ±5 ml pekatan A + 5 ml B per liter menaikkan ±1000 PPM (sesuaikan label produk Anda).</p>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="label">Volume tandon (L)</label>
-          <input v-model.number="calc.volume" type="number" min="1" class="input" inputmode="numeric" />
-        </div>
-        <div>
-          <label class="label">Target PPM</label>
-          <input v-model.number="calc.target" type="number" min="0" step="50" class="input" inputmode="numeric" />
-        </div>
-        <div>
-          <label class="label">PPM saat ini</label>
-          <input v-model.number="calc.current" type="number" min="0" class="input" inputmode="numeric" />
-        </div>
-        <div>
-          <label class="label">Konsentrasi (ml/L per 1000 PPM)</label>
-          <input v-model.number="calc.ratio" type="number" min="0.5" step="0.5" class="input" inputmode="decimal" />
-        </div>
-      </div>
-      <div v-if="calcResult" class="rounded-xl bg-leaf-50 p-4 text-center">
-        <p class="text-sm text-leaf-800">Tambahkan masing-masing</p>
-        <p class="text-2xl font-bold text-leaf-700">{{ calcResult }} ml</p>
-        <p class="text-sm text-leaf-800">pekatan <b>A</b> dan <b>B</b> (larutkan A dulu, aduk, lalu B)</p>
-      </div>
-      <p v-else-if="calc.current >= calc.target && calc.target" class="rounded-xl bg-amber-50 p-3 text-sm text-amber-700">
-        PPM saat ini sudah ≥ target — tidak perlu penambahan pekatan.
-      </p>
-    </div>
-
-    <QuickLogSheet v-if="logSheet" :preset-installation-id="filterInstallation" @close="logSheet = false" @saved="onSaved" />
+    <QuickLogSheet v-if="logSheet" :preset-installation-id="curInst" @close="logSheet = false" @saved="onSaved" @toast="onToast" />
   </div>
 </template>
 
 <script setup>
-import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
-import Chart from 'chart.js/auto';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { api } from '../api';
-import { formatId } from '../helpers';
+import { ICON, comma, numID, formatShort } from '../helpers';
+import TrendChart from '../components/TrendChart.vue';
 import QuickLogSheet from '../components/QuickLogSheet.vue';
 
 const installations = ref([]);
 const logs = ref([]);
-const filterInstallation = ref(null);
-const tab = ref('list');
+const trend = ref([]);
+const curInst = ref(null);
+const kind = ref('ph');
 const logSheet = ref(false);
-const trendData = ref([]);
-const phCanvas = ref(null);
-const ppmCanvas = ref(null);
-let charts = [];
+const calc = reactive({ volume: 20, target: 1120 });
 
-const calc = reactive({ volume: 40, target: 1000, current: 0, ratio: 5 });
-import { computed } from 'vue';
-const calcResult = computed(() => {
-  if (!calc.volume || !calc.target || calc.current == null || !calc.ratio) return null;
-  const gap = calc.target - calc.current;
-  if (gap <= 0) return null;
-  return Math.round(((gap / 1000) * calc.ratio * calc.volume) * 10) / 10;
-});
+const last = computed(() => logs.value[0]);
+const calcResult = computed(() => { if (!calc.volume || !calc.target) return null; return Math.round((calc.target / 140) * calc.volume); });
 
-const typeLabel = (t) => ({ cek: 'Cek Rutin', topup: 'Top-up', kuras: 'Kuras' }[t] || t);
-const typeChip = (t) => ({ cek: 'bg-blue-50 text-blue-600', topup: 'bg-leaf-50 text-leaf-600', kuras: 'bg-red-50 text-red-600' }[t] || 'bg-gray-100');
-const flagClass = (f) => ({ green: 'text-green-600 font-semibold', yellow: 'text-yellow-600 font-semibold', red: 'text-red-600 font-semibold' }[f] || 'text-gray-700');
-const flagIcon = (f) => ({ green: '●', yellow: '●', red: '●' }[f] || '');
+const phBadge = computed(() => badgeOf(last.value?.ph, 5.5, 6.5));
+const ppmBadge = computed(() => badgeOf(last.value?.ppm, 840, 1400));
+function badgeOf(v, lo, hi) { if (v == null) return 'b-muted'; if (v >= lo && v <= hi) return 'b-ok'; if (v >= lo * 0.94 && v <= hi * 1.06) return 'b-warn'; return 'b-bad'; }
+function flagColor(l) { const p = badgeOf(l.ph, l.range?.ph_min || 5.5, l.range?.ph_max || 6.5); const m = badgeOf(l.ppm, l.range?.ppm_min || 840, l.range?.ppm_max || 1400); if (p === 'b-bad' || m === 'b-bad') return 'var(--danger)'; if (p === 'b-warn' || m === 'b-warn') return 'var(--warn)'; return 'var(--leaf)'; }
+const typeLabel = (t) => ({ cek: 'Cek rutin', topup: 'Top-up air', kuras: 'Kuras total' }[t] || t);
 
 async function load() {
-  try {
-    const params = filterInstallation.value ? `?installation_id=${filterInstallation.value}` : '';
-    logs.value = await api('GET', `/api/logs${params}`);
-    if (filterInstallation.value) {
-      trendData.value = await api('GET', `/api/logs/trend?installation_id=${filterInstallation.value}`);
-      if (tab.value === 'trend') renderCharts();
-    }
-  } catch { /* offline */ }
+  if (!curInst.value) return;
+  try { [logs.value, trend.value] = await Promise.all([api('GET', `/api/logs?installation_id=${curInst.value}`), api('GET', `/api/logs/trend?installation_id=${curInst.value}`)]); } catch { /* offline */ }
 }
-
-async function renderCharts() {
-  await nextTick();
-  charts.forEach((c) => c.destroy());
-  charts = [];
-  if (!phCanvas.value || !ppmCanvas.value) return;
-  const labels = trendData.value.map((d) => d.date.slice(5));
-  const mk = (canvas, key, color) => new Chart(canvas, {
-    type: 'line',
-    data: { labels, datasets: [{ data: trendData.value.map((d) => d[key]), borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.3, spanGaps: true, pointRadius: 3 }] },
-    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { maxTicksLimit: 8 } } }, maintainAspectRatio: true },
-  });
-  charts.push(mk(phCanvas.value, 'ph', '#16a34a'));
-  charts.push(mk(ppmCanvas.value, 'ppm', '#2563eb'));
-}
-
-watch(tab, (t) => { if (t === 'trend') renderCharts(); });
-
-async function remove(l) {
-  if (!confirm('Hapus log ini?')) return;
-  await api('DELETE', `/api/logs/${l.id}`);
-  load();
-}
-
-function onSaved() {
-  logSheet.value = false;
-  load();
-  window.dispatchEvent(new CustomEvent('hg:refresh'));
-}
+function onSaved() { logSheet.value = false; load(); window.dispatchEvent(new CustomEvent('hg:refresh')); }
+function onToast(m) { window.dispatchEvent(new CustomEvent('hg:toast', { detail: m })); }
 
 onMounted(async () => {
   installations.value = await api('GET', '/api/installations').catch(() => []);
-  load();
+  if (installations.value.length) { curInst.value = installations.value[0].id; load(); }
   window.addEventListener('hg:refresh', load);
 });
-onUnmounted(() => {
-  window.removeEventListener('hg:refresh', load);
-  charts.forEach((c) => c.destroy());
-});
+onUnmounted(() => window.removeEventListener('hg:refresh', load));
 </script>

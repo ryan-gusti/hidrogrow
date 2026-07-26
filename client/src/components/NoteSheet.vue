@@ -1,17 +1,13 @@
 <template>
-  <Sheet title="📝 Catatan Harian" @close="$emit('close')">
-    <form class="space-y-3" @submit.prevent="save">
-      <div>
-        <label class="label">Tanggal</label>
-        <input v-model="date" type="date" class="input" required />
+  <Sheet title="Catatan Harian" @close="$emit('close')">
+    <form @submit.prevent="save">
+      <div class="field"><label>Tanggal</label><input v-model="date" type="date" required /></div>
+      <div class="field"><label>Catatan</label><textarea v-model="text" rows="3" required placeholder="Progres tanaman, tanda hama, perubahan daun…"></textarea></div>
+      <PhotoInput @uploaded="(url) => (photo = url)" @toast="(m) => emit('toast', m)" />
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button type="button" class="btn btn-secondary" style="flex:1" @click="$emit('close')">Batal</button>
+        <button type="submit" class="btn btn-primary" style="flex:2" :disabled="saving">{{ saving ? 'Menyimpan…' : 'Simpan' }}</button>
       </div>
-      <div>
-        <label class="label">Catatan</label>
-        <textarea v-model="text" class="input" rows="3" required placeholder="Progres tanaman, tanda hama, perubahan daun…"></textarea>
-      </div>
-      <PhotoInput @uploaded="(url) => (photo = url)" />
-      <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
-      <button class="btn-primary w-full" :disabled="saving">{{ saving ? 'Menyimpan…' : 'Simpan Catatan' }}</button>
     </form>
   </Sheet>
 </template>
@@ -24,24 +20,16 @@ import { api } from '../api';
 import { todayStr } from '../helpers';
 
 const props = defineProps({ batchId: { type: Number, required: true } });
-const emit = defineEmits(['close', 'saved']);
-
+const emit = defineEmits(['close', 'saved', 'toast']);
 const date = ref(todayStr());
 const text = ref('');
 const photo = ref(null);
 const saving = ref(false);
-const error = ref('');
 
 async function save() {
-  error.value = '';
   saving.value = true;
-  try {
-    await api('POST', '/api/notes', { batch_id: props.batchId, date: date.value, text: text.value, photo: photo.value });
-    emit('saved');
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    saving.value = false;
-  }
+  try { await api('POST', '/api/notes', { batch_id: props.batchId, date: date.value, text: text.value, photo: photo.value }); emit('toast', 'Catatan tersimpan.'); emit('saved'); }
+  catch (e) { emit('toast', e.message); }
+  finally { saving.value = false; }
 }
 </script>

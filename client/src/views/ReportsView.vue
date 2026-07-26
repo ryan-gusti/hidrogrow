@@ -1,107 +1,120 @@
 <template>
-  <div class="space-y-4">
-    <div v-if="summary" class="grid grid-cols-3 gap-2 text-center">
-      <div class="card !p-3"><p class="text-lg font-bold text-leaf-700">{{ (summary.total_weight_grams / 1000).toFixed(1) }} kg</p><p class="text-xs text-gray-500">Total panen</p></div>
-      <div class="card !p-3"><p class="text-lg font-bold text-leaf-700">{{ summary.total_harvests }}x</p><p class="text-xs text-gray-500">Panen tercatat</p></div>
-      <div class="card !p-3"><p class="text-lg font-bold text-leaf-700">Rp {{ summary.total_cost.toLocaleString('id-ID') }}</p><p class="text-xs text-gray-500">Total biaya</p></div>
+  <div v-if="summary">
+    <div class="page-head">
+      <h1>Laporan</h1>
+      <span class="sp"></span>
+      <button class="btn btn-secondary" @click="exportCsv"><span v-html="ICON.download"></span>Ekspor CSV</button>
     </div>
 
-    <button class="btn-secondary w-full" @click="exportCsv">⬇️ Ekspor Data Panen (CSV)</button>
-
-    <!-- Insight perbandingan siklus -->
-    <div v-if="insights.length" class="space-y-2">
-      <h3 class="font-bold">💡 Insight Siklus</h3>
-      <div v-for="(ins, i) in insights" :key="i" class="card !border-leaf-200 !bg-leaf-50 !p-3 text-sm text-leaf-900">
-        <b>{{ ins.plant }}</b> — {{ ins.last_batch }}:
-        <span v-if="ins.duration_diff_days != null">
-          {{ ins.duration_diff_days < 0 ? `${Math.abs(ins.duration_diff_days)} hari lebih cepat` : ins.duration_diff_days > 0 ? `${ins.duration_diff_days} hari lebih lambat` : 'durasi sama' }}
-        </span>
-        <span v-if="ins.weight_diff_pct != null">
-          & {{ ins.weight_diff_pct >= 0 ? `${ins.weight_diff_pct}% lebih berat` : `${Math.abs(ins.weight_diff_pct)}% lebih ringan` }}
-        </span>
-        dari rata-rata batch sebelumnya.
-      </div>
+    <div class="banner">
+      <img src="/assets/kebun-sap.jpg" alt="Kebun hidroponik" />
+      <div class="cap"><b>{{ auth.user?.name || 'Kebun' }}</b><br>{{ auth.installations.length }} instalasi · {{ totalLubang }} lubang · {{ summary.total_harvests }} kali panen</div>
     </div>
 
-    <!-- Panen per bulan -->
-    <div class="card">
-      <h3 class="mb-2 font-bold">Panen per Bulan</h3>
-      <p v-if="!summary?.per_month.length" class="text-sm text-gray-400">Belum ada data panen.</p>
-      <div v-else class="space-y-1.5">
-        <div v-for="m in [...summary.per_month].reverse().slice(0, 6)" :key="m.month" class="flex items-center gap-2 text-sm">
-          <span class="w-16 text-gray-500">{{ monthLabel(m.month) }}</span>
-          <div class="h-4 rounded-full bg-leaf-400" :style="{ width: barWidth(m.weight_grams) }" />
-          <span class="font-medium">{{ m.weight_grams }} g</span>
-        </div>
-      </div>
-    </div>
+    <section class="sec stat-grid" style="margin-top:16px">
+      <div class="stat"><div class="v">{{ kg(summary.total_weight_grams) }} <small>kg</small></div><div class="k">Total panen</div></div>
+      <div class="stat"><div class="v">{{ summary.total_harvests }}</div><div class="k">Kali panen</div></div>
+      <div class="stat"><div class="v">{{ summary.comparisons.reduce((s, c) => s + c.cycles.length, 0) }}</div><div class="k">Batch selesai</div></div>
+      <div class="stat"><div class="v">{{ rupiah(summary.total_cost) }}</div><div class="k">Total biaya</div></div>
+    </section>
 
-    <!-- Per tanaman & instalasi -->
-    <div class="grid grid-cols-1 gap-3">
-      <div class="card">
-        <h3 class="mb-2 font-bold">Per Jenis Tanaman</h3>
-        <p v-if="!summary?.per_plant.length" class="text-sm text-gray-400">Belum ada data.</p>
-        <div v-for="p in summary?.per_plant" :key="p.plant" class="flex justify-between border-b border-gray-50 py-1.5 text-sm last:border-0">
-          <span>{{ p.plant }}</span><span class="font-medium">{{ p.weight_grams }} g · {{ p.count }}x</span>
-        </div>
-      </div>
-      <div class="card">
-        <h3 class="mb-2 font-bold">Per Instalasi</h3>
-        <p v-if="!summary?.per_installation.length" class="text-sm text-gray-400">Belum ada data.</p>
-        <div v-for="i in summary?.per_installation" :key="i.installation" class="flex justify-between border-b border-gray-50 py-1.5 text-sm last:border-0">
-          <span>{{ i.installation }}</span><span class="font-medium">{{ i.weight_grams }} g · {{ i.count }}x</span>
-        </div>
-      </div>
-    </div>
+    <section v-if="insight" class="sec insight">
+      <svg class="leaf-bg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4.5 0-7.5-3-7.5-7.5C4.5 7.5 9 4 16 3.5c.8 5-1 9.5-4 12.5"/><path d="M12 21c0-5 1.5-8.5 5-11"/></svg>
+      <span class="eyebrow">Perbandingan siklus</span>
+      <p class="quote"><em>{{ insight.plant }}</em> — {{ insight.last_batch }}: {{ insightText }}.</p>
+      <p class="sub">Pola yang sama bisa kamu ulangi untuk siklus berikutnya. Lihat detail di tabel riwayat batch di bawah.</p>
+    </section>
 
-    <!-- Tabel perbandingan siklus -->
-    <div v-for="c in comparisonsWithCycles" :key="c.plant" class="card">
-      <h3 class="mb-2 font-bold">{{ c.plant }} — Riwayat Siklus</h3>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead><tr class="text-gray-400"><th class="py-1 pr-2">Batch</th><th class="pr-2">Hasil</th><th class="pr-2">Estimasi</th><th class="pr-2">Aktual</th><th>Biaya</th></tr></thead>
-          <tbody>
-            <tr v-for="cy in c.cycles" :key="cy.batch_id" class="border-t border-gray-50">
-              <td class="py-1.5 pr-2 font-medium">{{ cy.batch_name }}<span v-if="cy.status === 'failed'" class="text-red-500"> (gagal)</span></td>
-              <td class="pr-2">{{ cy.weight_grams }} g</td>
-              <td class="pr-2">{{ cy.estimated_days }} hari</td>
-              <td class="pr-2">{{ cy.actual_days != null ? cy.actual_days + ' hari' : '—' }}</td>
-              <td>Rp {{ cy.cost.toLocaleString('id-ID') }}</td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="lap-cols" style="margin-top:26px">
+      <div>
+        <section class="card chart-card">
+          <div class="sec-head" style="margin-bottom:6px"><h2 style="font-size:19px">Panen per bulan</h2><span class="sp"></span><span class="badge b-muted">gram</span></div>
+          <BarChart :per-month="summary.per_month" />
+        </section>
+
+        <section class="sec card" style="padding:16px">
+          <div class="sec-head" style="margin-bottom:6px"><h2 style="font-size:19px">Per jenis tanaman</h2><span class="sp"></span><span class="badge b-muted">total berat</span></div>
+          <div v-if="summary.per_plant.length">
+            <div v-for="p in summary.per_plant" :key="p.plant" class="plant-row">
+              <span class="nm">{{ p.plant }}</span>
+              <span class="track"><span class="fill" :style="{ width: Math.max(4, (p.weight_grams / maxPlant) * 100) + '%' }"></span></span>
+              <span class="g">{{ kg(p.weight_grams) }} kg</span>
+            </div>
+          </div>
+          <div v-else class="empty-note">Belum ada data panen.</div>
+        </section>
+
+        <section class="sec">
+          <div class="sec-head"><h2>Batch selesai</h2><span class="badge b-muted">{{ doneCount }} batch</span><span class="sp"></span></div>
+          <div class="card" style="padding:0">
+            <div v-for="c in doneCycles" :key="c.batch_id" class="hist-row">
+              <div class="b"><div class="t">{{ c.batch_name }}</div><div class="m">{{ c.status === 'failed' ? 'Gagal' : 'Selesai' }} · {{ c.estimated_days }} hari estimasi<template v-if="c.actual_days != null"> · {{ c.actual_days }} hari aktual</template></div></div>
+              <span class="badge" :class="c.status === 'failed' ? 'b-bad' : 'b-ok'">{{ c.status === 'failed' ? 'Gagal' : 'Selesai' }}</span>
+              <span class="g">{{ numID(c.weight_grams) }} g</span>
+            </div>
+            <div v-if="!doneCycles.length" class="empty-note" style="padding:16px;text-align:center">Belum ada batch selesai.</div>
+          </div>
+        </section>
+      </div>
+
+      <div>
+        <section class="card cost-card">
+          <span class="eyebrow">Ringkasan biaya</span>
+          <div style="margin-top:12px" class="frow">
+            <div class="field"><label>Total biaya tercatat (Rp)</label><input :value="rupiah(summary.total_cost)" disabled /></div>
+            <div class="field"><label>Asumsi harga jual (Rp/kg)</label><input v-model.number="pricePerKg" type="number" inputmode="numeric" min="0" value="25000" /></div>
+          </div>
+          <div class="cost-row"><span>Panen bulan ini</span><span class="v">{{ kg(monthGrams) }} kg</span></div>
+          <div class="cost-row"><span>Perkiraan nilai panen</span><span class="v">{{ rupiah(valueMonth) }}</span></div>
+          <div class="cost-row"><span>Total biaya</span><span class="v">{{ rupiah(summary.total_cost) }}</span></div>
+          <div class="cost-row total"><span>Selisih</span><span class="v" :style="{ color: margin >= 0 ? 'var(--leaf-deep)' : 'var(--danger)' }">{{ (margin >= 0 ? '+' : '−') + rupiah(Math.abs(margin)) }}</span></div>
+          <p style="font-size:12px;color:var(--meta);margin-top:10px;line-height:1.6">Angka kasar untuk kebutuhanmu sendiri — bukan pembukuan resmi.</p>
+        </section>
       </div>
     </div>
   </div>
+  <div v-else class="empty-note">Memuat laporan…</div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { api, getToken } from '../api';
-import { BULAN } from '../helpers';
+import { useAuthStore } from '../stores/auth';
+import { ICON, kg, numID, rupiah, todayStr } from '../helpers';
+import BarChart from '../components/BarChart.vue';
 
+const auth = useAuthStore();
 const summary = ref(null);
+const pricePerKg = ref(25000);
 
-const insights = computed(() => (summary.value?.comparisons || []).map((c) => c.insight).filter(Boolean));
-const comparisonsWithCycles = computed(() => (summary.value?.comparisons || []).filter((c) => c.cycles.length > 0));
+const totalLubang = computed(() => auth.installations.reduce((s, i) => s + (i.capacity || 0), 0));
+const maxPlant = computed(() => Math.max(1, ...(summary.value?.per_plant.map((p) => p.weight_grams) || [1])));
+const doneCycles = computed(() => summary.value?.comparisons.flatMap((c) => c.cycles) || []);
+const doneCount = computed(() => doneCycles.value.length);
 
-const monthLabel = (m) => `${BULAN[Number(m.slice(5)) - 1]} ${m.slice(2, 4)}`;
-const maxWeight = computed(() => Math.max(1, ...(summary.value?.per_month.map((m) => m.weight_grams) || [1])));
-const barWidth = (w) => `${Math.max(4, Math.round((w / maxWeight.value) * 55))}%`;
+const monthGrams = computed(() => summary.value?.per_month.find((m) => m.month === todayStr().slice(0, 7))?.weight_grams || 0);
+const valueMonth = computed(() => Math.round((monthGrams.value / 1000) * pricePerKg.value));
+const margin = computed(() => valueMonth.value - summary.value?.total_cost);
+
+const insight = computed(() => summary.value?.comparisons.map((c) => c.insight).find(Boolean) || null);
+const insightText = computed(() => {
+  const i = insight.value; if (!i) return '';
+  const parts = [];
+  if (i.duration_diff_days != null) parts.push(i.duration_diff_days < 0 ? `${Math.abs(i.duration_diff_days)} hari lebih cepat` : i.duration_diff_days > 0 ? `${i.duration_diff_days} hari lebih lambat` : 'durasi sama');
+  if (i.weight_diff_pct != null) parts.push(i.weight_diff_pct >= 0 ? `${i.weight_diff_pct}% lebih berat` : `${Math.abs(i.weight_diff_pct)}% lebih ringan`);
+  return parts.join(' & ') + ' dari rata-rata batch sebelumnya';
+});
 
 async function exportCsv() {
-  // Unduh via fetch agar header Authorization terkirim
-  const res = await fetch('/api/reports/harvests.csv', { headers: { Authorization: `Bearer ${getToken()}` } });
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'panen-hidrogrow.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+  try {
+    const res = await fetch('/api/reports/harvests.csv', { headers: { Authorization: `Bearer ${getToken()}` } });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'panen-hidrogrow.csv'; a.click();
+    URL.revokeObjectURL(url);
+    window.dispatchEvent(new CustomEvent('hg:toast', { detail: 'CSV panen diunduh.' }));
+  } catch (e) { window.dispatchEvent(new CustomEvent('hg:toast', { detail: e.message })); }
 }
 
-onMounted(async () => {
-  summary.value = await api('GET', '/api/reports/summary').catch(() => null);
-});
+onMounted(async () => { summary.value = await api('GET', '/api/reports/summary').catch(() => null); });
 </script>

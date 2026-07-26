@@ -1,20 +1,13 @@
 <template>
-  <Sheet title="💰 Tambah Biaya" @close="$emit('close')">
-    <form class="space-y-3" @submit.prevent="save">
-      <div>
-        <label class="label">Tanggal</label>
-        <input v-model="date" type="date" class="input" required />
+  <Sheet title="Tambah Biaya" @close="$emit('close')">
+    <form @submit.prevent="save">
+      <div class="field"><label>Tanggal</label><input v-model="date" type="date" required /></div>
+      <div class="field"><label>Deskripsi</label><input v-model="description" type="text" required placeholder="cth: Benih pakcoy 1 pack" /></div>
+      <div class="field"><label>Jumlah (Rp)</label><input v-model.number="amount" type="number" inputmode="numeric" min="0" step="500" required placeholder="15000" /></div>
+      <div style="display:flex;gap:10px">
+        <button type="button" class="btn btn-secondary" style="flex:1" @click="$emit('close')">Batal</button>
+        <button type="submit" class="btn btn-primary" style="flex:2" :disabled="saving">{{ saving ? 'Menyimpan…' : 'Simpan' }}</button>
       </div>
-      <div>
-        <label class="label">Deskripsi</label>
-        <input v-model="description" type="text" class="input" required placeholder="cth: Benih pakcoy 1 pack" />
-      </div>
-      <div>
-        <label class="label">Jumlah (Rp)</label>
-        <input v-model.number="amount" type="number" min="0" step="500" class="input" required inputmode="numeric" placeholder="15000" />
-      </div>
-      <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
-      <button class="btn-primary w-full" :disabled="saving">{{ saving ? 'Menyimpan…' : 'Simpan Biaya' }}</button>
     </form>
   </Sheet>
 </template>
@@ -26,24 +19,16 @@ import { api } from '../api';
 import { todayStr } from '../helpers';
 
 const props = defineProps({ batchId: { type: Number, required: true } });
-const emit = defineEmits(['close', 'saved']);
-
+const emit = defineEmits(['close', 'saved', 'toast']);
 const date = ref(todayStr());
 const description = ref('');
 const amount = ref(null);
 const saving = ref(false);
-const error = ref('');
 
 async function save() {
-  error.value = '';
   saving.value = true;
-  try {
-    await api('POST', '/api/notes/costs', { batch_id: props.batchId, date: date.value, description: description.value, amount: amount.value });
-    emit('saved');
-  } catch (err) {
-    error.value = err.message;
-  } finally {
-    saving.value = false;
-  }
+  try { await api('POST', '/api/notes/costs', { batch_id: props.batchId, date: date.value, description: description.value, amount: amount.value }); emit('toast', 'Biaya tersimpan.'); emit('saved'); }
+  catch (e) { emit('toast', e.message); }
+  finally { saving.value = false; }
 }
 </script>

@@ -1,19 +1,14 @@
 <template>
-  <Sheet title="⏰ Tunda Tugas" @close="$emit('close')">
-    <p class="mb-3 text-sm text-gray-600">{{ task.title }}</p>
-    <div class="space-y-2">
-      <button class="btn-secondary w-full justify-between" @click="snooze(todayStr())">
-        Nanti malam <span>{{ formatShort(todayStr()) }}</span>
-      </button>
-      <button class="btn-secondary w-full justify-between" @click="snooze(addDays(todayStr(), 1))">
-        Besok <span>{{ formatShort(addDays(todayStr(), 1)) }}</span>
-      </button>
-      <div class="flex gap-2">
-        <input v-model="custom" type="date" class="input flex-1" />
-        <button class="btn-primary" @click="snooze(custom)" :disabled="!custom">Pilih</button>
+  <Sheet title="Tunda Tugas" @close="$emit('close')">
+    <p class="sub" style="margin-bottom:14px">{{ task.title }}</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-secondary" style="justify-content:space-between" @click="snooze(todayStr())"><span>Nanti malam</span><span style="color:var(--meta)">{{ formatShort(todayStr()) }}</span></button>
+      <button class="btn btn-secondary" style="justify-content:space-between" @click="snooze(addDays(todayStr(),1))"><span>Besok pagi</span><span style="color:var(--meta)">{{ formatShort(addDays(todayStr(),1)) }}</span></button>
+      <div style="display:flex;gap:8px">
+        <input v-model="custom" type="date" style="flex:1;min-height:44px;padding:8px 12px;border:1px solid var(--border-soft);border-radius:var(--radius-md);font:inherit" />
+        <button class="btn btn-primary" :disabled="!custom" @click="snooze(custom)">Pilih</button>
       </div>
     </div>
-    <p v-if="error" class="mt-2 text-sm text-red-600">{{ error }}</p>
   </Sheet>
 </template>
 
@@ -24,18 +19,11 @@ import { api } from '../api';
 import { todayStr, addDays, formatShort } from '../helpers';
 
 const props = defineProps({ task: { type: Object, required: true } });
-const emit = defineEmits(['close', 'snoozed']);
-
+const emit = defineEmits(['close', 'snoozed', 'toast']);
 const custom = ref('');
-const error = ref('');
 
 async function snooze(until) {
-  error.value = '';
-  try {
-    await api('POST', `/api/tasks/${props.task.id}/snooze`, { until });
-    emit('snoozed');
-  } catch (err) {
-    error.value = err.message;
-  }
+  try { await api('POST', `/api/tasks/${props.task.id}/snooze`, { until }); emit('toast', 'Ditunda.'); emit('snoozed'); }
+  catch (e) { emit('toast', e.message); }
 }
 </script>
