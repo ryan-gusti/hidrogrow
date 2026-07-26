@@ -1,6 +1,6 @@
 # AGENTS.md
 
-HidroGrow — manajemen hidroponik rumahan, **full lokal** (Vue 3 + Express + SQLite). Lihat `prd.md` untuk spesifikasi produk.
+HidroGrow — manajemen hidroponik rumahan, **full lokal** (Vue 3 + Express + SQLite). Lihat `docs/prd.md` untuk spesifikasi produk.
 
 ## Commands
 
@@ -29,7 +29,6 @@ npm start                # produksi: server :3000 menyajikan API + client/dist
 
 - **Tailwind & Chart.js TIDAK dipakai** (dihapus). Sumber kebenaran visual = `client/src/design.css` (token Anthropic: beige #f5f4ed + terakota #c96442, serif display). Jangan tambahkan utility class Tailwind.
 - **Grafik SVG custom**: `components/TrendChart.vue` (pH/PPM) & `components/BarChart.vue` (panen). Jangan reintroduce lib chart.
-- `Frontend-Menarik-dari-PRD/*.html` = slicing referensi (read-only). Saat fix UI, cocokkan ke sini.
 - PWA via `vite-plugin-pwa`; service worker auto-update.
 - Offline-first: form log di-queue di localStorage (`client/src/api.js`) & disinkronkan saat online.
 

@@ -5,7 +5,6 @@
   "implementedAt": "2026-07-26",
   "entryFile": "client/src/design.css",
   "sourceFiles": {
-    "designSource": "Frontend-Menarik-dari-PRD/*.html (read-only slicing reference)",
     "tokenSource": "client/src/design.css",
     "components": "client/src/components/*.vue",
     "views": "client/src/views/*.vue",
@@ -19,67 +18,51 @@
   },
   "screens": [
     {
-      "slicingFile": "Frontend-Menarik-dari-PRD/index.html",
-      "role": "launcher-overview",
       "route": "/",
       "view": "client/src/views/TodayView.vue",
       "implementationNote": "Halaman 'Hari Ini' — greeting, stat-grid, hero instalasi dengan hole-grid, daftar tugas (TaskCard), instalasi, horizontal scroll 'Segera Datang'.",
       "status": "implemented"
     },
     {
-      "slicingFile": "Frontend-Menarik-dari-PRD/kalender.html",
-      "role": "screen",
       "route": "/kalender",
       "view": "client/src/views/CalendarView.vue",
       "implementationNote": "Grid bulanan/mingguan, dot berwarna per jenis event, badge tugas, panel hari, tambah jadwal (AddEventSheet), geser tanggal (EventSheet). Data dari /api/calendar (recurring dimaterialisasi server-side).",
       "status": "implemented"
     },
     {
-      "slicingFile": "Frontend-Menarik-dari-PRD/tanam.html",
-      "role": "screen",
       "route": "/tanam",
       "view": "client/src/views/GrowView.vue",
       "implementationNote": "Batch aktif dengan thumbnail + PhaseBar, katalog tanaman dengan search + cat-card. Detail batch di route /tanam/:id (BatchDetailView.vue).",
       "status": "implemented"
     },
     {
-      "slicingFile": "Frontend-Menarik-dari-PRD/log.html",
-      "role": "screen",
       "route": "/log",
       "view": "client/src/views/LogsView.vue",
       "implementationNote": "Reading cards (pH/PPM/suhu), grafik tren SVG (TrendChart.vue, pH & PPM toggle), riwayat log, kalkulator AB Mix.",
       "status": "implemented"
     },
     {
-      "slicingFile": "Frontend-Menarik-dari-PRD/laporan.html",
-      "role": "screen",
       "route": "/laporan",
       "view": "client/src/views/ReportsView.vue",
       "implementationNote": "Banner, stat-grid, insight siklus (kotak gelap), grafik batang SVG (BarChart.vue), per-tanaman, riwayat batch, ringkasan biaya, ekspor CSV.",
       "status": "implemented"
     },
     {
-      "slicingFile": null,
-      "role": "screen",
       "route": "/login",
       "view": "client/src/views/LoginView.vue",
-      "implementationNote": "Login username/password (akun default admin/admin123). Tidak ada di slicing — ditambah untuk autentikasi.",
+      "implementationNote": "Login username/password (akun default admin/admin123).",
       "status": "implemented"
     },
     {
-      "slicingFile": null,
-      "role": "screen",
       "route": "/onboarding",
       "view": "client/src/views/OnboardingView.vue",
-      "implementationNote": "Buat instalasi pertama (InstallationForm). Tidak ada di slicing.",
+      "implementationNote": "Buat instalasi pertama (InstallationForm).",
       "status": "implemented"
     },
     {
-      "slicingFile": null,
-      "role": "screen",
       "route": "/pengaturan",
       "view": "client/src/views/SettingsView.vue",
-      "implementationNote": "Profil, instalasi (CRUD), notifikasi, ganti password, hapus akun. Tidak ada di slicing.",
+      "implementationNote": "Profil, instalasi (CRUD), notifikasi, ganti password, hapus akun.",
       "status": "implemented"
     }
   ],
@@ -135,7 +118,7 @@
   "constraints": [
     "Grafik harus SVG custom (TrendChart.vue & BarChart.vue) — JANGAN reintroduce Chart.js atau lib chart lain.",
     "Tidak ada Tailwind — semua kelas di design.css.",
-    "Saat fix UI, cocokkan ke Frontend-Menarik-dari-PRD/*.html (slicing read-only).",
+    "Saat fix UI, cocokkan ke token & kelas di client/src/design.css.",
     "PhaseBar.vue: prop padded default true; set :padded=false jika di dalam card yang sudah ber-padding.",
     "Semua teks UI Bahasa Indonesia."
   ]

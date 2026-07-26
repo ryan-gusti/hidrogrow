@@ -1,13 +1,12 @@
 # HidroGrow — design handoff (post-implementation)
 
-Status: **terimplementasi** (26 Juli 2026). Slicing di `Frontend-Menarik-dari-PRD/*.html` sudah diport ke Vue 3 + design system.
+Status: **terimplementasi** (26 Juli 2026). Design system "Anthropic" sudah diport ke Vue 3 + `design.css`.
 
 ## Sumber kebenaran
 
 | Yang | File |
 |---|---|
 | Token & kelas desain (frozen) | `client/src/design.css` |
-| Slicing referensi (read-only) | `Frontend-Menarik-dari-PRD/*.html` |
 | Shell app | `client/src/App.vue` |
 | Komponen | `client/src/components/*.vue` |
 | View per route | `client/src/views/*.vue` |
@@ -50,8 +49,7 @@ Token (warna beige/terakota, serif display, oklch event, radius/shadow/motion) d
 
 ## Aturan fidelity (saat edit UI)
 
-1. Cocokkan ke `Frontend-Menarik-dari-PRD/*.html` dulu — itu kontrak visual.
-2. Token & kelas ambil dari `design.css`; jangan hardcode warna/spacing inline.
-3. Pertahankan teks Bahasa Indonesia asli dari slicing.
-4. Jangan flatten modul domain (batch card, kalender, reading card) jadi card generik.
-5. Jika ambigu, ikuti perilaku slicing, bukan pola baru.
+1. Token & kelas ambil dari `design.css`; jangan hardcode warna/spacing inline.
+2. Pertahankan teks Bahasa Indonesia asli.
+3. Jangan flatten modul domain (batch card, kalender, reading card) jadi card generik.
+4. Jika ambigu, ikuti pola yang sudah ada di komponen/view terdekat.

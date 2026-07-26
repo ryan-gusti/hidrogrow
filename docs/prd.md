@@ -4,7 +4,7 @@
 
 | | |
 |---|---|
-| **Versi Dokumen** | 1.3 |
+| **Versi Dokumen** | 1.4 |
 | **Tanggal** | 26 Juli 2026 |
 | **Status** | Terimplementasi (semua fase) |
 | **Platform** | Web-based (mobile-friendly / responsive, PWA), berjalan penuh secara lokal |
@@ -14,6 +14,8 @@
 > **Perubahan v1.2:** Autentikasi memakai **username** (bukan email) agar lebih mudah — tidak ada kebutuhan email sama sekali di aplikasi.
 >
 > **Perubahan v1.3:** Menghapus **registrasi publik** dan **mode tamu**. Aplikasi memakai **akun default** yang dibuat otomatis saat database kosong (username `admin`, password `admin123` — dapat diubah via env `DEFAULT_USERNAME`/`DEFAULT_PASSWORD` atau di Pengaturan). Repositori: https://github.com/ryan-gusti/hidrogrow
+>
+> **Perubahan v1.4:** Frontend diganti dengan **design system "Anthropic"**: palette beige hangat (#f5f4ed) + aksen terakota (#c96442), tipografi serif display, shell responsif (sidebar desktop / appbar+bottom-nav mobile), FAB, bottom-sheet, toast, dan **grafik SVG custom** (tren pH/PPM & batang panen) menggantikan Chart.js. Token desain dibekukan di `client/src/design.css`.
 
 ---
 
@@ -247,7 +249,7 @@ Tombol aksi cepat (FAB) untuk: catat pH/PPM, catat panen, batch baru.
 
 | Lapisan | Teknologi |
 |---|---|
-| Frontend | Vue 3 + Vite, Vue Router, Pinia, Tailwind CSS, PWA (`vite-plugin-pwa`/Workbox), Chart.js |
+| Frontend | Vue 3 + Vite, Vue Router, Pinia, **design system Anthropic** (`design.css` — token, komponen, responsif), PWA (`vite-plugin-pwa`/Workbox), grafik SVG custom (tanpa library chart) |
 | Backend | Node.js + Express (REST API), JWT untuk sesi |
 | Database | SQLite lokal via modul bawaan `node:sqlite` (file `server/data/hidrogrow.db`) |
 | Autentikasi | Username/password, hash bcrypt (bcryptjs). Akun default otomatis (`admin`/`admin123`, dapat dioverride via env). Tanpa registrasi publik, tanpa OAuth |
