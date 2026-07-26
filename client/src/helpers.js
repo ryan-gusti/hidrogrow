@@ -89,6 +89,12 @@ export const ICON = {
   download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0 4-4m-4 4-4-4"/><path d="M5 20h14"/></svg>',
 };
 
+// --- Lightbox global: klik foto untuk perbesar ---
+export function openLightbox(url, alt = '') {
+  if (!url) return;
+  window.dispatchEvent(new CustomEvent('hg:lightbox', { detail: { url, alt } }));
+}
+
 // --- Notifikasi lokal (tanpa push server) ---
 export async function ensureNotificationPermission() {
   if (!('Notification' in window)) return false;

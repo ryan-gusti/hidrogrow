@@ -36,7 +36,7 @@
           <div class="card" style="padding:0">
             <div v-for="l in logs" :key="l.id" class="log-row">
               <span class="st" :style="{ background: flagColor(l) }"></span>
-              <img v-if="l.photo" :src="l.photo" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none" alt="Foto log" />
+              <img v-if="l.photo" :src="l.photo" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;cursor:zoom-in" alt="Foto log" @click="openLightbox(l.photo, 'Foto log')" />
               <span class="dt">{{ formatShort(l.date) }}</span>
               <div class="bd">
                 <div class="t">{{ typeLabel(l.type) }}<span v-if="curInst === null" style="color:var(--meta);font-weight:400"> · {{ instName(l.installation_id) }}</span></div>
@@ -73,7 +73,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { api } from '../api';
-import { ICON, comma, numID, formatShort } from '../helpers';
+import { ICON, comma, numID, formatShort, openLightbox } from '../helpers';
 import TrendChart from '../components/TrendChart.vue';
 import QuickLogSheet from '../components/QuickLogSheet.vue';
 

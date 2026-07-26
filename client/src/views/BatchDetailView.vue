@@ -51,7 +51,7 @@
       <div class="sec-head"><h2 style="font-size:19px">Riwayat panen</h2></div>
       <div class="card" style="padding:0 16px">
         <div v-for="h in batch.harvests" :key="h.id" class="hist-row">
-          <img v-if="h.photo" :src="h.photo" style="width:48px;height:48px;border-radius:8px;object-fit:cover" alt="Foto panen" />
+          <img v-if="h.photo" :src="h.photo" style="width:48px;height:48px;border-radius:8px;object-fit:cover;cursor:zoom-in" alt="Foto panen" @click="openLightbox(h.photo, 'Foto panen')" />
           <div class="b"><div class="t">{{ formatId(h.date) }}</div><div class="m">{{ h.quantity }} {{ h.unit }}<template v-if="h.weight_grams"> · {{ numID(h.weight_grams) }} g</template><template v-if="h.notes"> · {{ h.notes }}</template></div></div>
           <span class="g">{{ numID(h.weight_grams || 0) }} g</span>
         </div>
@@ -65,7 +65,7 @@
         <div v-for="n in batch.notes" :key="n.id" class="note">
           <span class="dt">{{ formatShort(n.date) }}</span>
           <span class="tx">
-            <img v-if="n.photo" :src="n.photo" style="width:40px;height:40px;border-radius:8px;object-fit:cover;float:right;margin-left:8px" alt="Foto catatan" />
+            <img v-if="n.photo" :src="n.photo" style="width:40px;height:40px;border-radius:8px;object-fit:cover;float:right;margin-left:8px;cursor:zoom-in" alt="Foto catatan" @click="openLightbox(n.photo, 'Foto catatan')" />
             {{ n.text }}
           </span>
         </div>
@@ -91,7 +91,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { api } from '../api';
-import { EVENT_META, formatId, formatShort, todayStr, numID, rupiah } from '../helpers';
+import { EVENT_META, formatId, formatShort, todayStr, numID, rupiah, openLightbox } from '../helpers';
 import PhaseBar from '../components/PhaseBar.vue';
 import HarvestSheet from '../components/HarvestSheet.vue';
 import NoteSheet from '../components/NoteSheet.vue';

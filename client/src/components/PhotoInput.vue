@@ -2,7 +2,7 @@
   <div>
     <label v-if="label" class="field" style="margin:0 0 6px"><span style="font-size:12px;font-weight:500;color:var(--muted)">{{ label }}</span></label>
     <div v-if="preview" style="position:relative;margin-bottom:14px">
-      <img :src="preview" class="batch-thumb" style="width:100%;height:140px" alt="Foto" />
+      <img :src="preview" class="batch-thumb" style="width:100%;height:140px;cursor:zoom-in" alt="Foto" @click="openLightbox(preview, 'Foto')" />
       <button class="btn btn-danger btn-sm" style="position:absolute;right:8px;top:8px" @click="clear">Hapus</button>
     </div>
     <label v-else class="field" style="margin:0;display:block">
@@ -17,6 +17,7 @@
 <script setup>
 import { ref } from 'vue';
 import { uploadPhoto } from '../api';
+import { openLightbox } from '../helpers';
 
 const props = defineProps({ label: { type: String, default: '' } });
 const emit = defineEmits(['uploaded', 'toast']);

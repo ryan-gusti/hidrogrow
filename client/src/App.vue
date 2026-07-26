@@ -62,6 +62,7 @@
     <QuickLogSheet v-if="sheet === 'log'" @close="sheet = null" @saved="onSaved" @toast="onToast" />
     <BatchFormSheet v-if="sheet === 'batch'" :preset-date="presetDate" @close="sheet = null" @saved="onSaved" @toast="onToast" />
     <HarvestSheet v-if="sheet === 'harvest'" @close="sheet = null" @saved="onSaved" @toast="onToast" />
+    <ImageLightbox />
   </div>
 </template>
 
@@ -74,6 +75,7 @@ import { ICON } from './helpers';
 import QuickLogSheet from './components/QuickLogSheet.vue';
 import BatchFormSheet from './components/BatchFormSheet.vue';
 import HarvestSheet from './components/HarvestSheet.vue';
+import ImageLightbox from './components/ImageLightbox.vue';
 
 const route = useRoute();
 const auth = useAuthStore();
