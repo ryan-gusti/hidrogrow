@@ -26,6 +26,7 @@
       </div>
     </div>
     <div v-if="form.type !== 'cek'" class="field"><label>Volume ditambah (liter)</label><input v-model.number="form.volume_added" type="number" inputmode="numeric" min="0" placeholder="5" /></div>
+    <PhotoInput label="Foto (opsional)" @uploaded="(url) => (form.photo = url)" @toast="(m) => emit('toast', m)" />
     <div v-if="indicator" style="margin:2px 0 14px" v-html="indicator"></div>
     <div style="display:flex;gap:10px">
       <button class="btn btn-secondary" style="flex:1" @click="$emit('close')">Batal</button>
@@ -37,6 +38,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 import Sheet from './Sheet.vue';
+import PhotoInput from './PhotoInput.vue';
 import { api } from '../api';
 import { todayStr } from '../helpers';
 
@@ -56,7 +58,7 @@ const phRaw = ref('');
 const form = reactive({
   installation_id: props.presetInstallationId,
   batch_id: props.presetBatchId,
-  ph: null, ppm: null, water_temp: null, volume_added: null,
+  ph: null, ppm: null, water_temp: null, volume_added: null, photo: null,
   type: props.presetType,
 });
 

@@ -51,7 +51,7 @@
     <button class="fab" :class="{ open: fabOpen }" aria-label="Aksi cepat" @click="fabOpen = !fabOpen"><span v-html="ICON.plus"></span></button>
     <div class="fabmenu" :class="{ show: fabOpen }">
       <button @click="open('log')"><span class="lbl">Catat pH / PPM</span><span class="cir"><span v-html="ICON.drop"></span></span></button>
-      <button @click="open('panen')"><span class="lbl">Catat panen</span><span class="cir"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6 20c0-5 2.7-8 6-8s6 3 6 8"/><path d="M12 12V6"/><path d="M12 8c0-2 1.6-3.5 4-3.5 0 2-1.6 3.5-4 3.5Z"/></svg></span></button>
+      <button @click="open('harvest')"><span class="lbl">Catat panen</span><span class="cir"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6 20c0-5 2.7-8 6-8s6 3 6 8"/><path d="M12 12V6"/><path d="M12 8c0-2 1.6-3.5 4-3.5 0 2-1.6 3.5-4 3.5Z"/></svg></span></button>
       <button @click="open('batch')"><span class="lbl">Batch baru</span><span class="cir"><span v-html="ICON.navGrow"></span></span></button>
     </div>
 

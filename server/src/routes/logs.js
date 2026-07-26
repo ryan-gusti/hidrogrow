@@ -58,7 +58,7 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  const { installation_id, batch_id, date, ph, ppm, water_temp, volume_added, type = 'cek', note } = req.body || {};
+  const { installation_id, batch_id, date, ph, ppm, water_temp, volume_added, type = 'cek', note, photo } = req.body || {};
   if (!userOwnsInstallation(req.user.id, installation_id)) return res.status(400).json({ error: 'Instalasi tidak valid' });
   if (batch_id && !userOwnsBatch(req.user.id, batch_id)) return res.status(400).json({ error: 'Batch tidak valid' });
   const err = validate(req.body || {});
@@ -67,9 +67,9 @@ router.post('/', (req, res) => {
     return res.status(400).json({ error: 'Isi minimal satu nilai (pH, PPM, atau volume)' });
   }
   const info = db
-    .prepare(`INSERT INTO nutrient_logs (installation_id, batch_id, date, ph, ppm, water_temp, volume_added, type, note)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-    .run(installation_id, batch_id || null, date, ph ?? null, ppm ?? null, water_temp ?? null, volume_added ?? null, type, note || null);
+    .prepare(`INSERT INTO nutrient_logs (installation_id, batch_id, date, ph, ppm, water_temp, volume_added, type, note, photo)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(installation_id, batch_id || null, date, ph ?? null, ppm ?? null, water_temp ?? null, volume_added ?? null, type, note || null, photo || null);
   res.status(201).json(withRangeFlag(db.prepare('SELECT * FROM nutrient_logs WHERE id = ?').get(info.lastInsertRowid)));
 });
 

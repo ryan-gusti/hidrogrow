@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS nutrient_logs (
   volume_added REAL,
   type TEXT NOT NULL DEFAULT 'cek', -- cek | topup | kuras
   note TEXT,
+  photo TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -126,6 +127,12 @@ CREATE INDEX IF NOT EXISTS idx_logs_inst_date ON nutrient_logs(installation_id, 
 const userCols = db.prepare(`PRAGMA table_info(users)`).all().map((c) => c.name);
 if (userCols.includes('email') && !userCols.includes('username')) {
   db.exec('ALTER TABLE users RENAME COLUMN email TO username');
+}
+
+// Migrasi: tambah kolom photo ke nutrient_logs jika belum ada
+const logCols = db.prepare(`PRAGMA table_info(nutrient_logs)`).all().map((c) => c.name);
+if (!logCols.includes('photo')) {
+  db.exec('ALTER TABLE nutrient_logs ADD COLUMN photo TEXT');
 }
 
 // Akun default (v1.3: tanpa registrasi publik) — dibuat sekali saat DB kosong
